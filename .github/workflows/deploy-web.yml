@@ -43,10 +43,17 @@ jobs:
           PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.CF_WEB_ANALYTICS_TOKEN }}
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # `--commit-message` uses the SHA so non-ASCII commit messages don't
-          # blow up Cloudflare with error 8000111 (we hit this on lelemon-app).
-          command: pages deploy apps/web/dist --project-name=mcify-web --commit-message=${{ github.sha }}
+        # We invoke wrangler directly via pnpm rather than cloudflare/wrangler-action
+        # because the action's auto-install path doesn't play with pnpm workspaces
+        # (it does `pnpm add wrangler` at the root which trips ERR_PNPM_ADDING_TO_ROOT).
+        # wrangler is a devDep of @mcify/web so `pnpm --filter` finds it.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # `--commit-message` uses the SHA so non-ASCII commit messages don't blow
+        # up Cloudflare with error 8000111 (we hit this on lelemon-app).
+        run: |
+          pnpm --filter mcify-web exec wrangler pages deploy dist \
+            --project-name mcify-web \
+            --branch main \
+            --commit-message "${{ github.sha }}"
