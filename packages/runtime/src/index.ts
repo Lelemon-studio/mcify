@@ -20,10 +20,7 @@ export type { SdkServerOptions } from './sdk-server.js';
 // For tree-shaking, prefer `@mcify/runtime/node`, `@mcify/runtime/bun`, `@mcify/runtime/workers`.
 export type { NodeServeOptions, NodeServer } from './adapters/node.js';
 export type { BunServeOptions, BunServer } from './adapters/bun.js';
-export type {
-  WorkersFetchHandler,
-  WorkersHandlerOptions,
-} from './adapters/workers.js';
+export type { WorkersFetchHandler, WorkersHandlerOptions } from './adapters/workers.js';
 
 // Auth
 export {
@@ -52,3 +49,15 @@ export type {
   JsonRpcError,
   JsonRpcErrorBody,
 } from './jsonrpc.js';
+
+// Telemetry / event bus
+export { EventBus, buildConfigSnapshot } from './events.js';
+export type {
+  RuntimeEvent,
+  RuntimeEventListener,
+  ToolCalledEvent,
+  ResourceReadEvent,
+  PromptRenderedEvent,
+  ConfigLoadedEvent,
+  ConfigSnapshot,
+} from './events.js';

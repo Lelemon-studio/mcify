@@ -6,6 +6,7 @@ import {
   InitializeRequestParamsSchema,
   ReadResourceRequestParamsSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import type { EventBus } from './events.js';
 import {
   err,
   isJsonRpcRequest,
@@ -49,10 +50,7 @@ const PLACEHOLDER_PATTERN = /\{([^/{}]+)\}/g;
 
 const escapeRegex = (s: string): string => s.replace(/[.+?^$()|[\]\\]/g, (c) => `\\${c}`);
 
-export const matchUriTemplate = (
-  template: string,
-  uri: string,
-): Record<string, string> | null => {
+export const matchUriTemplate = (template: string, uri: string): Record<string, string> | null => {
   // Build the regex by walking the template: literal slices get escaped,
   // `{name}` placeholders become named capture groups. Doing it in one pass
   // avoids double-escaping the braces themselves.
@@ -106,36 +104,61 @@ interface CallToolResult {
   isError?: boolean;
 }
 
+const emitToolCalled = (
+  eventBus: EventBus | undefined,
+  toolName: string,
+  args: unknown,
+  startMs: number,
+  outcome: { result: unknown } | { error: { message: string; phase?: string } },
+): void => {
+  if (!eventBus || eventBus.listenerCount() === 0) return;
+  const durationMs = Date.now() - startMs;
+  eventBus.emit({
+    type: 'tool:called',
+    id: eventBus.nextId(),
+    timestamp: new Date().toISOString(),
+    toolName,
+    args,
+    durationMs,
+    ...('result' in outcome ? { result: outcome.result } : { error: outcome.error }),
+  });
+};
+
 const handleCallTool = async (
   config: Config,
   ctx: HandlerContext,
   params: { name: string; arguments?: unknown },
+  eventBus?: EventBus,
 ): Promise<CallToolResult | null> => {
   const tool = config.tools?.find((t) => t.name === params.name);
   if (!tool) return null;
+  const start = Date.now();
+  const args = params.arguments ?? {};
   try {
-    const result = await tool.invoke(params.arguments ?? {}, ctx);
+    const result = await tool.invoke(args, ctx);
+    emitToolCalled(eventBus, tool.name, args, start, { result });
     return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
   } catch (e) {
     if (e instanceof McifyValidationError) {
+      emitToolCalled(eventBus, tool.name, args, start, {
+        error: { message: e.message, phase: e.phase },
+      });
       return {
         isError: true,
         content: [{ type: 'text' as const, text: `validation error (${e.phase}): ${e.message}` }],
       };
     }
+    const message = e instanceof Error ? e.message : 'tool execution failed';
+    emitToolCalled(eventBus, tool.name, args, start, { error: { message } });
     return {
       isError: true,
-      content: [
-        { type: 'text' as const, text: e instanceof Error ? e.message : 'tool execution failed' },
-      ],
+      content: [{ type: 'text' as const, text: message }],
     };
   }
 };
 
 const handleListResources = (config: Config) => ({
-  resources: (config.resources ?? [])
-    .filter((r) => !r.isTemplate)
-    .map(toMcpResourceListItem),
+  resources: (config.resources ?? []).filter((r) => !r.isTemplate).map(toMcpResourceListItem),
 });
 
 const handleListResourceTemplates = (config: Config) => ({
@@ -149,20 +172,51 @@ const handleListResourceTemplates = (config: Config) => ({
     })),
 });
 
-const handleReadResource = async (config: Config, ctx: HandlerContext, params: { uri: string }) => {
+const handleReadResource = async (
+  config: Config,
+  ctx: HandlerContext,
+  params: { uri: string },
+  eventBus?: EventBus,
+) => {
   const match = findResourceForUri(config, params.uri);
   if (!match) return null;
-  const content = await match.resource.read(match.params ?? {}, ctx);
-  return {
-    contents: [
-      {
+  const start = Date.now();
+  try {
+    const content = await match.resource.read(match.params ?? {}, ctx);
+    if (eventBus && eventBus.listenerCount() > 0) {
+      eventBus.emit({
+        type: 'resource:read',
+        id: eventBus.nextId(),
+        timestamp: new Date().toISOString(),
         uri: params.uri,
-        mimeType: content.mimeType,
-        ...(content.text !== undefined ? { text: content.text } : {}),
-        ...(content.blob !== undefined ? { blob: content.blob } : {}),
-      },
-    ],
-  };
+        params: match.params,
+        durationMs: Date.now() - start,
+      });
+    }
+    return {
+      contents: [
+        {
+          uri: params.uri,
+          mimeType: content.mimeType,
+          ...(content.text !== undefined ? { text: content.text } : {}),
+          ...(content.blob !== undefined ? { blob: content.blob } : {}),
+        },
+      ],
+    };
+  } catch (e) {
+    if (eventBus && eventBus.listenerCount() > 0) {
+      eventBus.emit({
+        type: 'resource:read',
+        id: eventBus.nextId(),
+        timestamp: new Date().toISOString(),
+        uri: params.uri,
+        params: match.params,
+        durationMs: Date.now() - start,
+        error: { message: e instanceof Error ? e.message : 'resource read failed' },
+      });
+    }
+    throw e;
+  }
 };
 
 const handleListPrompts = (config: Config) => ({
@@ -173,17 +227,45 @@ const handleGetPrompt = async (
   config: Config,
   ctx: HandlerContext,
   params: { name: string; arguments?: unknown },
+  eventBus?: EventBus,
 ) => {
   const prompt = config.prompts?.find((p) => p.name === params.name);
   if (!prompt) return null;
-  const messages = await prompt.render(params.arguments ?? {}, ctx);
-  return {
-    ...(prompt.description ? { description: prompt.description } : {}),
-    messages: messages.map((m) => ({
-      role: m.role,
-      content: typeof m.content === 'string' ? { type: 'text', text: m.content } : m.content,
-    })),
-  };
+  const start = Date.now();
+  const args = params.arguments ?? {};
+  try {
+    const messages = await prompt.render(args, ctx);
+    if (eventBus && eventBus.listenerCount() > 0) {
+      eventBus.emit({
+        type: 'prompt:rendered',
+        id: eventBus.nextId(),
+        timestamp: new Date().toISOString(),
+        promptName: prompt.name,
+        args,
+        durationMs: Date.now() - start,
+      });
+    }
+    return {
+      ...(prompt.description ? { description: prompt.description } : {}),
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: typeof m.content === 'string' ? { type: 'text', text: m.content } : m.content,
+      })),
+    };
+  } catch (e) {
+    if (eventBus && eventBus.listenerCount() > 0) {
+      eventBus.emit({
+        type: 'prompt:rendered',
+        id: eventBus.nextId(),
+        timestamp: new Date().toISOString(),
+        promptName: prompt.name,
+        args,
+        durationMs: Date.now() - start,
+        error: { message: e instanceof Error ? e.message : 'prompt render failed' },
+      });
+    }
+    throw e;
+  }
 };
 
 /**
@@ -192,7 +274,9 @@ const handleGetPrompt = async (
  * `safeParse`, so use a structural type that ignores the heavy generics.
  */
 interface SafeParseable<T> {
-  safeParse(input: unknown): { success: true; data: T } | { success: false; error: { issues: readonly unknown[] } };
+  safeParse(
+    input: unknown,
+  ): { success: true; data: T } | { success: false; error: { issues: readonly unknown[] } };
 }
 
 interface ParseOk<T> {
@@ -210,11 +294,18 @@ const parseParams = <T>(schema: SafeParseable<T>, rawParams: unknown): ParseOk<T
   return { ok: false, issues: result.error.issues };
 };
 
+export interface DispatchOptions {
+  /** Optional event bus that receives tool/resource/prompt telemetry. */
+  eventBus?: EventBus;
+}
+
 export const dispatch = async (
   raw: unknown,
   config: Config,
   ctx: HandlerContext,
+  options: DispatchOptions = {},
 ): Promise<JsonRpcResponse | null> => {
+  const { eventBus } = options;
   if (!isJsonRpcRequest(raw)) {
     return err(null, Codes.InvalidRequest, 'Invalid JSON-RPC request');
   }
@@ -253,7 +344,7 @@ export const dispatch = async (
             : err(id, Codes.InvalidParams, 'Invalid tools/call params', { issues: parsed.issues });
         }
         const { name, arguments: args } = parsed.data;
-        const result = await handleCallTool(config, ctx, { name, arguments: args });
+        const result = await handleCallTool(config, ctx, { name, arguments: args }, eventBus);
         if (result === null) {
           return err(id, Codes.NotFound, `Tool not found: ${name}`);
         }
@@ -275,7 +366,7 @@ export const dispatch = async (
                 issues: parsed.issues,
               });
         }
-        const result = await handleReadResource(config, ctx, { uri: parsed.data.uri });
+        const result = await handleReadResource(config, ctx, { uri: parsed.data.uri }, eventBus);
         if (result === null) {
           return err(id, Codes.NotFound, `Resource not found: ${parsed.data.uri}`);
         }
@@ -294,10 +385,12 @@ export const dispatch = async (
                 issues: parsed.issues,
               });
         }
-        const result = await handleGetPrompt(config, ctx, {
-          name: parsed.data.name,
-          arguments: parsed.data.arguments,
-        });
+        const result = await handleGetPrompt(
+          config,
+          ctx,
+          { name: parsed.data.name, arguments: parsed.data.arguments },
+          eventBus,
+        );
         if (result === null) {
           return err(id, Codes.NotFound, `Prompt not found: ${parsed.data.name}`);
         }

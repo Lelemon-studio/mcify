@@ -6,6 +6,7 @@ import { McifyAuthError, getProcessEnv, resolveAuthFromHeaders, type EnvSource }
 import { err, JsonRpcErrorCodes as Codes } from './jsonrpc.js';
 import { createConsoleLogger } from './logger.js';
 import { RUNTIME_VERSION } from './version.js';
+import type { EventBus } from './events.js';
 
 export type EnvProvider = EnvSource | ((c: Context) => EnvSource);
 
@@ -26,6 +27,11 @@ export interface HttpHandlerOptions {
   env?: EnvProvider;
   /** Enable a `GET /` health response. Defaults to true. */
   health?: boolean;
+  /**
+   * Optional event bus that receives tool/resource/prompt telemetry. Used by
+   * the inspector to render live calls and call latency. No-op when omitted.
+   */
+  eventBus?: EventBus;
 }
 
 export type FetchHandler = (request: Request) => Promise<Response>;
@@ -107,7 +113,7 @@ export const createHttpApp = (config: Config, options: HttpHandlerOptions = {}):
       ...(requestId ? { requestId } : {}),
     });
 
-    const response = await dispatch(body, config, ctx);
+    const response = await dispatch(body, config, ctx, { eventBus: options.eventBus });
 
     if (response === null) {
       // Notification: no body, 202 Accepted.

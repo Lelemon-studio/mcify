@@ -1,0 +1,49 @@
+{
+  "name": "@mcify/inspector",
+  "version": "0.1.0-alpha.1",
+  "description": "Local web inspector for `mcify dev` — tools, calls log, playground.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/inspector#readme",
+  "bugs": "https://github.com/Lelemon-studio/mcify/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lelemon-studio/mcify.git",
+    "directory": "packages/inspector"
+  },
+  "author": "Lelemon Studio <contacto@lelemon.cl>",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "astro build",
+    "dev": "astro dev --port 5174",
+    "preview": "astro preview --port 5174",
+    "test": "vitest run --passWithNoTests",
+    "lint": "echo \"(lint runs at root)\"",
+    "typecheck": "astro check --tsconfig tsconfig.json",
+    "clean": "rimraf dist .astro .turbo",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@mcify/runtime": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/react": "^4.1.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "astro": "^5.0.5"
+  }
+}
