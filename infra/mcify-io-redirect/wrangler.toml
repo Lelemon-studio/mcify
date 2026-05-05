@@ -1,0 +1,11 @@
+name = "mcify-io-redirect"
+main = "index.mjs"
+compatibility_date = "2026-01-01"
+
+[[routes]]
+pattern = "mcify.io/*"
+zone_name = "mcify.io"
+
+[[routes]]
+pattern = "www.mcify.io/*"
+zone_name = "mcify.io"
