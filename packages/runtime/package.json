@@ -26,6 +26,10 @@
     "./inspector": {
       "types": "./dist/inspector.d.ts",
       "import": "./dist/inspector.js"
+    },
+    "./test": {
+      "types": "./dist/test.d.ts",
+      "import": "./dist/test.js"
     }
   },
   "files": [

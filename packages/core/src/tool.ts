@@ -2,12 +2,18 @@ import type { ZodType, z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { HandlerContext } from './context.js';
 import { McifyValidationError } from './errors.js';
+import { composeMiddlewares, type ToolMiddleware } from './middleware.js';
 
 export interface ToolDefinition<TInput extends ZodType, TOutput extends ZodType> {
   name: string;
   description: string;
   input: TInput;
   output: TOutput;
+  /**
+   * Optional middlewares wrapping the handler. They run in declaration order
+   * after input validation. See {@link ToolMiddleware} for semantics.
+   */
+  middlewares?: readonly ToolMiddleware[];
   handler: (
     input: z.infer<TInput>,
     ctx: HandlerContext,
@@ -43,8 +49,20 @@ export function defineTool<TInput extends ZodType, TOutput extends ZodType>(
     throw new TypeError(`defineTool(${def.name}): \`description\` is required`);
   }
 
+  const rawHandler = async (
+    input: z.infer<TInput>,
+    ctx: HandlerContext,
+  ): Promise<z.infer<TOutput>> => Promise.resolve(def.handler(input, ctx));
+
+  // The user-facing `handler` exposed on the Tool runs middlewares but skips
+  // input/output validation. Tests can call `handler` for direct dispatch;
+  // production traffic always goes through `invoke`.
+  const composed = composeMiddlewares(def.middlewares ?? [], async (input, ctx) =>
+    rawHandler(input as z.infer<TInput>, ctx),
+  );
+
   const handler = async (input: z.infer<TInput>, ctx: HandlerContext): Promise<z.infer<TOutput>> =>
-    Promise.resolve(def.handler(input, ctx));
+    composed(input, ctx) as Promise<z.infer<TOutput>>;
 
   const invoke = async (rawInput: unknown, ctx: HandlerContext): Promise<z.infer<TOutput>> => {
     const inputResult = def.input.safeParse(rawInput);
@@ -65,7 +83,10 @@ export function defineTool<TInput extends ZodType, TOutput extends ZodType>(
     description: def.description,
     input: def.input,
     output: def.output,
-    inputJsonSchema: zodToJsonSchema(def.input, { $refStrategy: 'none' }) as Record<string, unknown>,
+    inputJsonSchema: zodToJsonSchema(def.input, { $refStrategy: 'none' }) as Record<
+      string,
+      unknown
+    >,
     outputJsonSchema: zodToJsonSchema(def.output, { $refStrategy: 'none' }) as Record<
       string,
       unknown

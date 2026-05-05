@@ -55,3 +55,12 @@ export type { ValidationPhase } from './errors.js';
 
 // Schema helpers
 export { schema } from './schema/index.js';
+
+// Middleware (also available standalone via `@mcify/core/middleware`)
+export { composeMiddlewares, requireAuth, rateLimit, withTimeout } from './middleware.js';
+export type {
+  ToolMiddleware,
+  RequireAuthOptions,
+  RateLimitOptions,
+  WithTimeoutOptions,
+} from './middleware.js';
