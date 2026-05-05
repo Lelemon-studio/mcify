@@ -3,7 +3,11 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { HandlerContext } from './context.js';
 import { McifyValidationError } from './errors.js';
 
-export type PromptRole = 'user' | 'assistant' | 'system';
+/**
+ * MCP roles supported in prompt messages. The protocol does not currently
+ * support `system` in prompts, so we don't expose it here.
+ */
+export type PromptRole = 'user' | 'assistant';
 
 export interface PromptTextContent {
   type: 'text';
@@ -23,12 +27,18 @@ export interface PromptMessage {
   content: PromptContent | string;
 }
 
-export interface PromptDefinition<TArgs extends ZodType | undefined = undefined> {
+export interface BasicPromptDefinition {
   name: string;
   description?: string;
-  arguments?: TArgs;
+  render: (ctx: HandlerContext) => PromptMessage[] | Promise<PromptMessage[]>;
+}
+
+export interface ParameterizedPromptDefinition<TArgs extends ZodType> {
+  name: string;
+  description?: string;
+  arguments: TArgs;
   render: (
-    args: TArgs extends ZodType ? z.infer<TArgs> : Record<string, never>,
+    args: z.infer<TArgs>,
     ctx: HandlerContext,
   ) => PromptMessage[] | Promise<PromptMessage[]>;
 }
@@ -44,8 +54,17 @@ export interface Prompt {
 
 const PROMPT_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 
-export function definePrompt<TArgs extends ZodType | undefined = undefined>(
-  def: PromptDefinition<TArgs>,
+const hasArguments = (
+  def: BasicPromptDefinition | ParameterizedPromptDefinition<ZodType>,
+): def is ParameterizedPromptDefinition<ZodType> =>
+  'arguments' in def && def.arguments !== undefined;
+
+export function definePrompt(def: BasicPromptDefinition): Prompt;
+export function definePrompt<TArgs extends ZodType>(
+  def: ParameterizedPromptDefinition<TArgs>,
+): Prompt;
+export function definePrompt(
+  def: BasicPromptDefinition | ParameterizedPromptDefinition<ZodType>,
 ): Prompt {
   if (!def.name) throw new TypeError('definePrompt: `name` is required');
   if (!PROMPT_NAME_PATTERN.test(def.name)) {
@@ -54,33 +73,27 @@ export function definePrompt<TArgs extends ZodType | undefined = undefined>(
     );
   }
 
-  const argumentsJsonSchema = def.arguments
+  const isParameterized = hasArguments(def);
+  const argumentsJsonSchema = isParameterized
     ? (zodToJsonSchema(def.arguments, { $refStrategy: 'none' }) as Record<string, unknown>)
     : undefined;
 
   const render = async (rawArgs: unknown, ctx: HandlerContext): Promise<PromptMessage[]> => {
-    const argsInput = rawArgs ?? {};
-    let args: unknown = argsInput;
-    if (def.arguments) {
-      const result = def.arguments.safeParse(argsInput);
+    if (isParameterized) {
+      const result = def.arguments.safeParse(rawArgs ?? {});
       if (!result.success) {
         throw new McifyValidationError('arguments', result.error.issues);
       }
-      args = result.data;
+      return def.render(result.data, ctx);
     }
-    return Promise.resolve(
-      (def.render as (a: unknown, c: HandlerContext) => PromptMessage[] | Promise<PromptMessage[]>)(
-        args,
-        ctx,
-      ),
-    );
+    return def.render(ctx);
   };
 
   return {
     __mcify: 'prompt' as const,
     name: def.name,
     description: def.description,
-    arguments: def.arguments,
+    arguments: isParameterized ? def.arguments : undefined,
     argumentsJsonSchema,
     render,
   };

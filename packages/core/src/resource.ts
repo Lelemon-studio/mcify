@@ -8,14 +8,22 @@ export interface ResourceContent {
   blob?: string;
 }
 
-export interface ResourceDefinition<TParams extends ZodType | undefined = undefined> {
+export interface StaticResourceDefinition {
   uri: string;
   name: string;
   description?: string;
   mimeType?: string;
-  params?: TParams;
+  read: (ctx: HandlerContext) => ResourceContent | Promise<ResourceContent>;
+}
+
+export interface TemplateResourceDefinition<TParams extends ZodType> {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+  params: TParams;
   read: (
-    params: TParams extends ZodType ? z.infer<TParams> : Record<string, never>,
+    params: z.infer<TParams>,
     ctx: HandlerContext,
   ) => ResourceContent | Promise<ResourceContent>;
 }
@@ -33,41 +41,45 @@ export interface Resource {
 
 const URI_TEMPLATE_PATTERN = /\{[^/{}]+\}/;
 
-export function isResourceTemplate(uri: string): boolean {
-  return URI_TEMPLATE_PATTERN.test(uri);
-}
+export const isResourceTemplate = (uri: string): boolean => URI_TEMPLATE_PATTERN.test(uri);
 
-export function defineResource<TParams extends ZodType | undefined = undefined>(
-  def: ResourceDefinition<TParams>,
+const hasParams = (
+  def: StaticResourceDefinition | TemplateResourceDefinition<ZodType>,
+): def is TemplateResourceDefinition<ZodType> => 'params' in def && def.params !== undefined;
+
+export function defineResource(def: StaticResourceDefinition): Resource;
+export function defineResource<TParams extends ZodType>(
+  def: TemplateResourceDefinition<TParams>,
+): Resource;
+export function defineResource(
+  def: StaticResourceDefinition | TemplateResourceDefinition<ZodType>,
 ): Resource {
   if (!def.uri) throw new TypeError('defineResource: `uri` is required');
   if (!def.name) throw new TypeError(`defineResource(${def.uri}): \`name\` is required`);
 
   const isTemplate = isResourceTemplate(def.uri);
+  const isParameterized = hasParams(def);
 
-  if (isTemplate && !def.params) {
+  if (isTemplate && !isParameterized) {
     throw new TypeError(
       `defineResource(${def.uri}): URI has placeholders but no \`params\` schema provided`,
     );
   }
+  if (!isTemplate && isParameterized) {
+    throw new TypeError(
+      `defineResource(${def.uri}): \`params\` was provided but the URI has no placeholders`,
+    );
+  }
 
   const read = async (rawParams: unknown, ctx: HandlerContext): Promise<ResourceContent> => {
-    const paramsInput = rawParams ?? {};
-    let params: unknown = paramsInput;
-    if (def.params) {
-      const result = def.params.safeParse(paramsInput);
+    if (isParameterized) {
+      const result = def.params.safeParse(rawParams ?? {});
       if (!result.success) {
         throw new McifyValidationError('params', result.error.issues);
       }
-      params = result.data;
+      return def.read(result.data, ctx);
     }
-    const content = await Promise.resolve(
-      (def.read as (p: unknown, c: HandlerContext) => ResourceContent | Promise<ResourceContent>)(
-        params,
-        ctx,
-      ),
-    );
-    return content;
+    return def.read(ctx);
   };
 
   return {
@@ -76,7 +88,7 @@ export function defineResource<TParams extends ZodType | undefined = undefined>(
     name: def.name,
     description: def.description,
     mimeType: def.mimeType,
-    params: def.params,
+    params: isParameterized ? def.params : undefined,
     isTemplate,
     read,
   };

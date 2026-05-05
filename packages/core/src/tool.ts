@@ -51,12 +51,12 @@ export function defineTool<TInput extends ZodType, TOutput extends ZodType>(
     if (!inputResult.success) {
       throw new McifyValidationError('input', inputResult.error.issues);
     }
-    const result = await handler(inputResult.data as z.infer<TInput>, ctx);
+    const result = await handler(inputResult.data, ctx);
     const outputResult = def.output.safeParse(result);
     if (!outputResult.success) {
       throw new McifyValidationError('output', outputResult.error.issues);
     }
-    return outputResult.data as z.infer<TOutput>;
+    return outputResult.data;
   };
 
   return {

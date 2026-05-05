@@ -11,13 +11,19 @@ export type { Tool, ToolDefinition } from './tool.js';
 
 // Resource
 export { defineResource, isResourceTemplate } from './resource.js';
-export type { Resource, ResourceDefinition, ResourceContent } from './resource.js';
+export type {
+  Resource,
+  StaticResourceDefinition,
+  TemplateResourceDefinition,
+  ResourceContent,
+} from './resource.js';
 
 // Prompt
 export { definePrompt } from './prompt.js';
 export type {
   Prompt,
-  PromptDefinition,
+  BasicPromptDefinition,
+  ParameterizedPromptDefinition,
   PromptMessage,
   PromptContent,
   PromptTextContent,
@@ -29,8 +35,10 @@ export type {
 export { defineConfig } from './config.js';
 export type { Config } from './config.js';
 
-// Auth
-export { bearer, apiKey, oauth, none };
+// Auth — `bearer`, `apiKey`, `oauth` are exported as top-level for convenience.
+// `none` is intentionally only available via the `auth` namespace below to avoid
+// shadowing the common `none` identifier in user code.
+export { bearer, apiKey, oauth };
 export type { BearerOptions } from './auth/bearer.js';
 export type { ApiKeyOptions } from './auth/api-key.js';
 export type { OAuthOptions } from './auth/oauth.js';

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { bearer, apiKey, none } from '@mcify/core';
+import { auth, bearer, apiKey } from '@mcify/core';
 import { McifyAuthError, resolveAuthFromHeaders } from './auth.js';
 
 describe('resolveAuthFromHeaders', () => {
@@ -7,8 +7,8 @@ describe('resolveAuthFromHeaders', () => {
     it('returns { type: none } when config is undefined', async () => {
       expect(await resolveAuthFromHeaders(undefined, new Headers())).toEqual({ type: 'none' });
     });
-    it('returns { type: none } for none() config', async () => {
-      expect(await resolveAuthFromHeaders(none(), new Headers())).toEqual({ type: 'none' });
+    it('returns { type: none } for auth.none() config', async () => {
+      expect(await resolveAuthFromHeaders(auth.none(), new Headers())).toEqual({ type: 'none' });
     });
   });
 

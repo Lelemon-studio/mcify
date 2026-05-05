@@ -151,7 +151,7 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
       return {
         ...(prompt.description ? { description: prompt.description } : {}),
         messages: messages.map((m) => ({
-          role: m.role === 'system' ? 'user' : m.role,
+          role: m.role,
           content: typeof m.content === 'string' ? { type: 'text', text: m.content } : m.content,
         })),
       };
