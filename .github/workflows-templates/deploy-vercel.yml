@@ -1,0 +1,44 @@
+# Auto-deploy your mcify server to Vercel Edge on every push to main.
+# Required repo secrets:
+#   - VERCEL_TOKEN       (vercel.com/account/tokens)
+#   - VERCEL_ORG_ID      (`vercel link` writes it to .vercel/project.json)
+#   - VERCEL_PROJECT_ID  (same file)
+
+name: Deploy MCP server (Vercel Edge)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test --if-present
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: pnpm exec mcify deploy vercel --prod

@@ -1,0 +1,45 @@
+# Auto-deploy your mcify server to Fly.io on every push to main.
+# Required repo secret:
+#   - FLY_API_TOKEN  (`flyctl tokens create deploy -x 999999h`)
+#
+# First-time setup: run `flyctl launch` locally once to create the app and
+# generate fly.toml. Subsequent deploys use this workflow.
+
+name: Deploy MCP server (Fly.io)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-fly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test --if-present
+
+      - name: Deploy to Fly.io
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: pnpm exec mcify deploy fly
