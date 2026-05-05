@@ -14,6 +14,11 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://mcify.dev').href;
+
+// Cloudflare Web Analytics — privacy-friendly page-view tracking, no cookies.
+// Set the Pages env var `PUBLIC_CF_WEB_ANALYTICS_TOKEN` once you generate a
+// site token in the Cloudflare dashboard (Analytics & Logs → Web Analytics).
+const webAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? '';
 ---
 
 <!doctype html>
@@ -46,8 +51,19 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://mcify.dev')
 
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    {
+      webAnalyticsToken && (
+        <script
+          is:inline
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={`{"token": "${webAnalyticsToken}"}`}
+        />
+      )
+    }
   </head>
-  <body class="font-sans">
+  <body class="flex min-h-screen flex-col font-sans">
     <slot />
   </body>
 </html>

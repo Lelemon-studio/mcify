@@ -1,0 +1,22 @@
+# Security and caching headers for Cloudflare Pages.
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' https://rsms.me data:; img-src 'self' data: https://img.shields.io; connect-src 'self' https://challenges.cloudflare.com https://cloudflareinsights.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+# Long-cache hashed assets (Astro emits content-hashed files under /assets/)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Don't cache the entry HTML — Cloudflare's edge can revalidate fast.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/llms.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/markdown; charset=utf-8

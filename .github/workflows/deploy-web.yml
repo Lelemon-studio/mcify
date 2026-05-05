@@ -37,6 +37,10 @@ jobs:
 
       - name: Build
         run: pnpm --filter mcify-web build
+        env:
+          # Public env vars baked into the static bundle.
+          PUBLIC_TURNSTILE_SITEKEY: ${{ vars.TURNSTILE_SITEKEY }}
+          PUBLIC_CF_WEB_ANALYTICS_TOKEN: ${{ vars.CF_WEB_ANALYTICS_TOKEN }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
