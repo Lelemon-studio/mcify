@@ -5,7 +5,16 @@
     "mcify-docs": "0.0.0",
     "@mcify/cli": "0.0.1-alpha.0",
     "@mcify/core": "0.0.1-alpha.0",
-    "@mcify/runtime": "0.0.1-alpha.0"
+    "@mcify/runtime": "0.0.1-alpha.0",
+    "@mcify/example-khipu": "0.1.0-alpha.1",
+    "@mcify/inspector": "0.1.0-alpha.1"
   },
-  "changesets": ["initial-alpha-release"]
+  "changesets": [
+    "agents-md-and-khipu-template",
+    "deploy-cloudflare-vercel-docker",
+    "green-rocks-join",
+    "initial-alpha-release",
+    "khipu-connector",
+    "rare-squids-join"
+  ]
 }
