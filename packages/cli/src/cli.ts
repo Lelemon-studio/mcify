@@ -33,6 +33,8 @@ Commands:
   deploy <target>          Deploy to a hosting target
                              cloudflare            Cloudflare Workers (via wrangler)
                              vercel                Vercel Edge Functions
+                             fly                   Fly.io (via flyctl)
+                             railway               Railway (via railway CLI)
                              docker                Build a Docker image (optional push)
                              --dry-run             Don't actually deploy
                              --help                Per-target options

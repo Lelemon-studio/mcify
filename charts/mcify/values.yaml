@@ -1,0 +1,127 @@
+# Default values for the mcify Helm chart.
+# Override anything here in your own `my-values.yaml` and pass via
+# `helm install ... -f my-values.yaml`.
+
+image:
+  # Replace with the registry path you push your `mcify deploy docker` build to.
+  repository: ghcr.io/your-org/your-mcp-server
+  tag: '' # Defaults to .Chart.appVersion when empty.
+  pullPolicy: IfNotPresent
+  # Optional: imagePullSecrets reference for private registries.
+  pullSecrets: []
+  #   - name: regcred
+
+# Number of pod replicas. HPA below can grow this dynamically.
+replicaCount: 1
+
+# Container port the app listens on. mcify default is 8888.
+port: 8888
+
+# Plain (non-secret) env vars passed to the container.
+env: {}
+  # NODE_ENV: production
+  # PUBLIC_FLAG: enabled
+
+# Secrets via an existing Kubernetes Secret object. Recommended over inline
+# `secret.create=true` so production credentials never live in values.yaml.
+secret:
+  # Set to true to render the templates/secret.yaml in this chart (dev only).
+  create: false
+  # Plaintext values (only used when `create: true`). For production, use an
+  # external-secrets / sops / Vault flow and reference the Secret here:
+  values: {}
+  #   MCIFY_AUTH_TOKEN: changeme
+
+  # If you already have a Kubernetes Secret with the env vars, name it here.
+  # Set both `create: false` and `existing: <name>`.
+  existing: ''
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Horizontal Pod Autoscaler. Disabled by default.
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: ''
+
+# Probes — both hit the runtime's GET / health endpoint.
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 1
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Service exposing the pods inside the cluster.
+service:
+  type: ClusterIP
+  port: 80
+  # When `service.type=LoadBalancer`, set the external loadBalancerIP here
+  # (cloud-dependent).
+  loadBalancerIP: ''
+
+# Ingress — wires an external host to the service. Bring your own ingress
+# controller (nginx, Traefik, or a managed ALB / Gateway).
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/proxy-body-size: 1m
+  hosts:
+    - host: mcp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+    # - secretName: mcp-example-com-tls
+    #   hosts:
+    #     - mcp.example.com
+
+# ServiceAccount used by the pods. Most setups don't need cluster-side
+# Kubernetes API access — leave automountServiceAccountToken false.
+serviceAccount:
+  create: true
+  name: ''
+  automountServiceAccountToken: false
+  annotations: {}
+
+# Pod-level securityContext (drop privileges, read-only root).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container-level securityContext.
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Pod-level scheduling.
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Extra labels / annotations applied to all chart objects.
+commonLabels: {}
+commonAnnotations: {}

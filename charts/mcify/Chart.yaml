@@ -1,0 +1,38 @@
+apiVersion: v2
+name: mcify
+description: Helm chart for an mcify MCP server (Node.js, HTTP transport).
+
+type: application
+
+# Helm-chart version (independent of the app version).
+version: 0.1.0-alpha.0
+
+# Default mcify CLI / runtime version this chart targets. Override
+# `image.tag` in your values.yaml to pin a specific build of your server.
+appVersion: '1.0.0-alpha.2'
+
+home: https://mcify.dev
+sources:
+  - https://github.com/Lelemon-studio/mcify
+icon: https://mcify.dev/favicon.svg
+
+keywords:
+  - mcp
+  - model-context-protocol
+  - ai-agents
+  - claude
+  - cursor
+
+maintainers:
+  - name: Lelemon Studio
+    email: contacto@lelemon.cl
+    url: https://lelemon.cl
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/links: |
+    - name: mcify
+      url: https://mcify.dev
+    - name: source
+      url: https://github.com/Lelemon-studio/mcify

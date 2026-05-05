@@ -6,3 +6,8 @@
 **/node_modules/**
 pnpm-lock.yaml
 LICENSE
+
+# Helm templates use Go template syntax inside YAML — Prettier's YAML parser
+# rejects `{{ }}` directives. Same for the chart's NOTES.txt (plain text).
+charts/**/templates/**
+charts/**/NOTES.txt

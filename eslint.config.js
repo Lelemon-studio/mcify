@@ -42,4 +42,19 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // Cloudflare Workers / browser-runtime files use Web globals (Request,
+    // Response, URL, fetch) that the default Node config doesn't know about.
+    files: ['infra/**/*.{js,mjs,ts}', 'apps/web/src/**/*.{js,ts}'],
+    languageOptions: {
+      globals: {
+        Request: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
+        addEventListener: 'readonly',
+        WebSocket: 'readonly',
+      },
+    },
+  },
 );

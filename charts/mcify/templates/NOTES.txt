@@ -1,0 +1,30 @@
+{{ include "mcify.fullname" . }} deployed.
+
+App version: {{ .Chart.AppVersion }}
+Image:       {{ include "mcify.image" . }}
+
+{{- if .Values.ingress.enabled }}
+The MCP server is reachable at the following hostnames (set up DNS + TLS):
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}/mcp
+{{- end }}
+{{- else if eq .Values.service.type "LoadBalancer" }}
+NOTE: it may take a minute for the LoadBalancer IP to be assigned.
+Watch progress with:
+
+  kubectl --namespace {{ .Release.Namespace }} get svc {{ include "mcify.fullname" . }} -w
+{{- else }}
+The Service is ClusterIP-only. Port-forward to test locally:
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "mcify.fullname" . }} {{ .Values.port }}:{{ .Values.service.port }}
+
+Then connect your MCP client to http://localhost:{{ .Values.port }}/mcp
+{{- end }}
+
+{{- $secret := include "mcify.secretName" . }}
+{{- if not $secret }}
+
+WARNING: no Secret is wired into the pods. Tools requiring auth will fail.
+Set `secret.existing: <secret-name>` (recommended) or
+`secret.create: true` with `secret.values.MCIFY_AUTH_TOKEN: ...` (dev only).
+{{- end }}
