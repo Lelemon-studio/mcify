@@ -1,0 +1,28 @@
+{
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Khipu (Chile) MCP server — created from the @mcify/cli example-khipu template.",
+  "scripts": {
+    "dev": "mcify dev",
+    "build": "mcify build",
+    "start": "node dist/server.mjs",
+    "test": "vitest run",
+    "generate": "mcify generate"
+  },
+  "dependencies": {
+    "@mcify/core": "^0.1.0-alpha",
+    "@mcify/runtime": "^0.1.0-alpha",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@mcify/cli": "^0.1.0-alpha",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

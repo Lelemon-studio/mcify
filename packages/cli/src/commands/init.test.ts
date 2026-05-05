@@ -36,6 +36,12 @@ describe('init', () => {
 
     const readme = await fs.readFile(path.join(dir, 'README.md'), 'utf-8');
     expect(readme).toContain('# my-mcp');
+
+    // AGENTS.md is the universal AI-agent contract for the user's project.
+    // It must exist and have the project name substituted.
+    const agents = await fs.readFile(path.join(dir, 'AGENTS.md'), 'utf-8');
+    expect(agents).toContain('# AGENTS.md — AI agent instructions for my-mcp');
+    expect(agents).toContain('Adding a tool');
   });
 
   it('renames _gitignore to .gitignore', async () => {
@@ -67,5 +73,34 @@ describe('init', () => {
       templatesRoot: getTemplatesRoot(),
     });
     expect(dir).toBe(path.join(tmpDir, 'custom-name'));
+  });
+
+  it('scaffolds the example-khipu template with the project name in package.json', async () => {
+    const { dir } = await init({
+      name: 'mi-khipu',
+      template: 'example-khipu',
+      templatesRoot: getTemplatesRoot(),
+    });
+    const pkg = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf-8')) as {
+      name: string;
+    };
+    expect(pkg.name).toBe('mi-khipu');
+
+    // Connector source is copied verbatim — no placeholder substitution
+    // inside `client.ts` because it has no `{{name}}` markers.
+    const client = await fs.readFile(path.join(dir, 'src/client.ts'), 'utf-8');
+    expect(client).toContain('class KhipuClient');
+
+    const tool = await fs.readFile(path.join(dir, 'src/tools/create-payment.ts'), 'utf-8');
+    expect(tool).toContain("name: 'khipu_create_payment'");
+
+    // mcify.config.ts uses the literal `khipu` server name (not {{name}}) —
+    // the MCP server identity stays `khipu` regardless of project directory.
+    const config = await fs.readFile(path.join(dir, 'mcify.config.ts'), 'utf-8');
+    expect(config).toContain("name: 'khipu'");
+
+    // AGENTS.md substitutes {{name}}.
+    const agents = await fs.readFile(path.join(dir, 'AGENTS.md'), 'utf-8');
+    expect(agents).toContain('AI agent instructions for mi-khipu');
   });
 });
