@@ -80,7 +80,7 @@ describe('createHttpHandler', () => {
       method: 'tools/call',
       params: { name: 'add', arguments: { a: 10, b: 20 } },
     });
-    const callJson = (await callRes.json()) as { result: { content: Array<{ text: string }> } };
+    const callJson = (await callRes.json()) as { result: { content: { text: string }[] } };
     expect(JSON.parse(callJson.result.content[0]!.text)).toEqual({ sum: 30 });
   });
 
@@ -124,7 +124,7 @@ describe('createHttpHandler', () => {
         { authorization: 'Bearer secret' },
       );
       expect(res.status).toBe(200);
-      const json = (await res.json()) as { result: { content: Array<{ text: string }> } };
+      const json = (await res.json()) as { result: { content: { text: string }[] } };
       expect(JSON.parse(json.result.content[0]!.text)).toEqual({ type: 'bearer' });
     });
   });

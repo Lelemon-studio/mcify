@@ -8,7 +8,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { Config, HandlerContext } from '@mcify/core';
+import type { Config, HandlerContext, Resource } from '@mcify/core';
 import { McifyValidationError } from '@mcify/core';
 import { matchUriTemplate } from './dispatch.js';
 import { buildHandlerContext } from './context.js';
@@ -26,6 +26,24 @@ const buildCapabilities = (config: Config) => {
   return capabilities;
 };
 
+const findResourceForUri = (
+  resources: readonly Resource[],
+  uri: string,
+): { resource: Resource; params: Record<string, string> | null } | null => {
+  for (const r of resources) {
+    if (!r.isTemplate && r.uri === uri) {
+      return { resource: r, params: null };
+    }
+  }
+  for (const r of resources) {
+    if (r.isTemplate) {
+      const params = matchUriTemplate(r.uri, uri);
+      if (params) return { resource: r, params };
+    }
+  }
+  return null;
+};
+
 export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): Server => {
   const server = new Server(
     { name: config.name, version: config.version },
@@ -38,9 +56,10 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
   });
   const ctxFactory = options.ctx ?? (() => buildHandlerContext({ logger: stderrLogger }));
 
-  if (config.tools && config.tools.length > 0) {
+  const tools = config.tools ?? [];
+  if (tools.length > 0) {
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: config.tools!.map((t) => ({
+      tools: tools.map((t) => ({
         name: t.name,
         description: t.description,
         inputSchema: t.inputJsonSchema as { type: 'object'; [k: string]: unknown },
@@ -48,7 +67,7 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
     }));
 
     server.setRequestHandler(CallToolRequestSchema, async (req) => {
-      const tool = config.tools!.find((t) => t.name === req.params.name);
+      const tool = tools.find((t) => t.name === req.params.name);
       if (!tool) {
         return {
           isError: true,
@@ -75,10 +94,11 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
     });
   }
 
-  if (config.resources && config.resources.length > 0) {
+  const resources = config.resources ?? [];
+  if (resources.length > 0) {
     server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-      resources: config
-        .resources!.filter((r) => !r.isTemplate)
+      resources: resources
+        .filter((r) => !r.isTemplate)
         .map((r) => ({
           uri: r.uri,
           name: r.name,
@@ -88,8 +108,8 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
     }));
 
     server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
-      resourceTemplates: config
-        .resources!.filter((r) => r.isTemplate)
+      resourceTemplates: resources
+        .filter((r) => r.isTemplate)
         .map((r) => ({
           uriTemplate: r.uri,
           name: r.name,
@@ -100,24 +120,7 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
 
     server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
       const uri = req.params.uri;
-      let match: { resource: typeof config.resources extends readonly (infer R)[] ? R : never; params: Record<string, string> | null } | null = null;
-      for (const r of config.resources!) {
-        if (!r.isTemplate && r.uri === uri) {
-          match = { resource: r, params: null };
-          break;
-        }
-      }
-      if (!match) {
-        for (const r of config.resources!) {
-          if (r.isTemplate) {
-            const params = matchUriTemplate(r.uri, uri);
-            if (params) {
-              match = { resource: r, params };
-              break;
-            }
-          }
-        }
-      }
+      const match = findResourceForUri(resources, uri);
       if (!match) {
         throw new Error(`Resource not found: ${uri}`);
       }
@@ -135,9 +138,10 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
     });
   }
 
-  if (config.prompts && config.prompts.length > 0) {
+  const prompts = config.prompts ?? [];
+  if (prompts.length > 0) {
     server.setRequestHandler(ListPromptsRequestSchema, async () => ({
-      prompts: config.prompts!.map((p) => ({
+      prompts: prompts.map((p) => ({
         name: p.name,
         ...(p.description ? { description: p.description } : {}),
         ...(p.argumentsJsonSchema ? { argumentsSchema: p.argumentsJsonSchema } : {}),
@@ -145,7 +149,7 @@ export const buildSdkServer = (config: Config, options: SdkServerOptions = {}): 
     }));
 
     server.setRequestHandler(GetPromptRequestSchema, async (req) => {
-      const prompt = config.prompts!.find((p) => p.name === req.params.name);
+      const prompt = prompts.find((p) => p.name === req.params.name);
       if (!prompt) throw new Error(`Prompt not found: ${req.params.name}`);
       const messages = await prompt.render(req.params.arguments ?? {}, ctxFactory());
       return {

@@ -6,7 +6,6 @@ import {
   InitializeRequestParamsSchema,
   ReadResourceRequestParamsSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import type { z, ZodTypeAny } from 'zod';
 import {
   err,
   isJsonRpcRequest,
@@ -103,7 +102,7 @@ const handleListTools = (config: Config) => ({
 });
 
 interface CallToolResult {
-  content: Array<{ type: 'text'; text: string }>;
+  content: { type: 'text'; text: string }[];
   isError?: boolean;
 }
 
@@ -187,10 +186,25 @@ const handleGetPrompt = async (
   };
 };
 
-const parseParams = <S extends ZodTypeAny>(
-  schema: S,
-  rawParams: unknown,
-): { ok: true; data: z.infer<S> } | { ok: false; issues: z.ZodIssue[] } => {
+/**
+ * The official MCP SDK ships with internal Zod schemas whose generic
+ * parameters are not assignable to our `zod@3` types. We only depend on
+ * `safeParse`, so use a structural type that ignores the heavy generics.
+ */
+interface SafeParseable<T> {
+  safeParse(input: unknown): { success: true; data: T } | { success: false; error: { issues: readonly unknown[] } };
+}
+
+interface ParseOk<T> {
+  ok: true;
+  data: T;
+}
+interface ParseFail {
+  ok: false;
+  issues: readonly unknown[];
+}
+
+const parseParams = <T>(schema: SafeParseable<T>, rawParams: unknown): ParseOk<T> | ParseFail => {
   const result = schema.safeParse(rawParams ?? {});
   if (result.success) return { ok: true, data: result.data };
   return { ok: false, issues: result.error.issues };

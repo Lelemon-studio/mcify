@@ -38,12 +38,9 @@ export const createWorkersHandler = (
   options: WorkersHandlerOptions = {},
 ): WorkersFetchHandler => {
   const app = createHttpApp(config, options);
-  return (request, env, ctx) =>
-    app.fetch(request, env as Record<string, unknown>, ctx as ExecutionContext | undefined);
+  // Hono's `app.fetch` accepts `(request, env?, executionCtx?)`. The shapes of
+  // env and executionCtx are runtime-specific; we forward them as-is. Using
+  // `never` casts here keeps us free from a hard dep on @cloudflare/workers-types.
+  return async (request, env, ctx) =>
+    app.fetch(request, env as never, ctx as never);
 };
-
-// Minimal Workers ExecutionContext type so we don't pull in @cloudflare/workers-types as a hard dep.
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
-}
