@@ -34,7 +34,8 @@
     "test:watch": "vitest",
     "lint": "echo \"(lint not configured yet)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rimraf dist .turbo"
+    "clean": "rimraf dist .turbo",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "zod": "^3.23.8",

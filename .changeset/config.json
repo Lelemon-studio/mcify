@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "Lelemon-studio/mcify" }
+  ],
+  "commit": false,
+  "fixed": [],
+  "linked": [["@mcify/cli", "@mcify/core", "@mcify/runtime"]],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}
