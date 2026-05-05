@@ -1,6 +1,6 @@
 {
   "name": "@mcify/cli",
-  "version": "0.1.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Command-line tool for mcify — init, dev, build, deploy, generate.",
   "license": "Apache-2.0",
   "type": "module",
@@ -54,7 +54,7 @@
     "tsx": "^4.19.2"
   },
   "peerDependencies": {
-    "@mcify/inspector": "^0.1.0-alpha"
+    "@mcify/inspector": "^0.1.0-alpha.2"
   },
   "peerDependenciesMeta": {
     "@mcify/inspector": {
