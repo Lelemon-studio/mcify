@@ -10,6 +10,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/adapters/node.d.ts",
+      "import": "./dist/adapters/node.js"
+    },
+    "./bun": {
+      "types": "./dist/adapters/bun.d.ts",
+      "import": "./dist/adapters/bun.js"
+    },
+    "./workers": {
+      "types": "./dist/adapters/workers.d.ts",
+      "import": "./dist/adapters/workers.js"
     }
   },
   "files": ["dist", "README.md", "LICENSE", "NOTICE"],

@@ -40,6 +40,13 @@
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
-    "@mcify/core": "workspace:*"
+    "@mcify/core": "workspace:*",
+    "@mcify/runtime": "workspace:*",
+    "chokidar": "^4.0.1",
+    "esbuild": "^0.24.0",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
   }
 }
