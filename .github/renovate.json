@@ -1,0 +1,56 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    ":maintainLockFilesWeekly",
+    "group:allNonMajor"
+  ],
+  "labels": ["deps"],
+  "rangeStrategy": "bump",
+  "schedule": ["before 06:00 on monday"],
+  "timezone": "America/Santiago",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "packageRules": [
+    {
+      "description": "Group all @mcify/* internal references (workspace:*) into one PR",
+      "matchPackagePatterns": ["^@mcify/"],
+      "groupName": "internal mcify deps",
+      "enabled": false
+    },
+    {
+      "description": "Group ESLint + plugins together",
+      "matchPackagePatterns": ["eslint"],
+      "groupName": "eslint"
+    },
+    {
+      "description": "Group TypeScript-related deps together",
+      "matchPackageNames": ["typescript", "typescript-eslint", "@types/node"],
+      "groupName": "typescript"
+    },
+    {
+      "description": "Group Vitest + adjacent test infra together",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
+      "groupName": "vitest"
+    },
+    {
+      "description": "Hold @modelcontextprotocol/sdk to manual review (protocol upgrades)",
+      "matchPackageNames": ["@modelcontextprotocol/sdk"],
+      "automerge": false,
+      "labels": ["deps", "needs-review"]
+    },
+    {
+      "description": "Auto-merge non-major patch updates after CI passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 06:00 on monday"]
+  }
+}
