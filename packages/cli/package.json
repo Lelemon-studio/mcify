@@ -1,0 +1,45 @@
+{
+  "name": "@mcify/cli",
+  "version": "0.0.1-alpha.0",
+  "description": "Command-line tool for mcify — init, dev, build, deploy, generate.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "mcify": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "templates", "README.md", "LICENSE", "NOTICE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/cli#readme",
+  "bugs": "https://github.com/Lelemon-studio/mcify/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lelemon-studio/mcify.git",
+    "directory": "packages/cli"
+  },
+  "author": "Lelemon Studio <contacto@lelemon.cl>",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo \"(lint not configured yet)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@mcify/core": "workspace:*"
+  }
+}

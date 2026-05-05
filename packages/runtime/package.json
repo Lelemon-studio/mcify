@@ -1,0 +1,42 @@
+{
+  "name": "@mcify/runtime",
+  "version": "0.0.1-alpha.0",
+  "description": "MCP server runtime for mcify — Hono-based, multi-target (Node, Bun, Workers).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/runtime#readme",
+  "bugs": "https://github.com/Lelemon-studio/mcify/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lelemon-studio/mcify.git",
+    "directory": "packages/runtime"
+  },
+  "author": "Lelemon Studio <contacto@lelemon.cl>",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo \"(lint not configured yet)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@mcify/core": "workspace:*"
+  }
+}

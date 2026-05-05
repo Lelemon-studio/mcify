@@ -1,0 +1,8 @@
+**/dist/**
+**/build/**
+**/.turbo/**
+**/.astro/**
+**/coverage/**
+**/node_modules/**
+pnpm-lock.yaml
+LICENSE
