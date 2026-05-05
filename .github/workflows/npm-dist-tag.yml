@@ -1,0 +1,44 @@
+name: npm dist-tag
+
+# Manual workflow for adjusting npm dist-tags. Useful when Changesets
+# publishes a brand-new package to `latest` instead of `alpha` (because
+# the package didn't have a previous regular release).
+#
+# Run from the GitHub UI: Actions → "npm dist-tag" → Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package name (e.g. @mcify/runtime)'
+        required: true
+        type: string
+      version:
+        description: 'Version to tag (e.g. 1.0.0-alpha.2)'
+        required: true
+        type: string
+      tag:
+        description: 'Dist-tag to set (alpha, beta, latest, ...)'
+        required: true
+        default: 'alpha'
+        type: string
+
+jobs:
+  dist-tag:
+    name: Move dist-tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Move dist-tag
+        run: |
+          echo "Moving ${{ inputs.tag }} → ${{ inputs.package }}@${{ inputs.version }}"
+          npm dist-tag add "${{ inputs.package }}@${{ inputs.version }}" "${{ inputs.tag }}"
+          npm view "${{ inputs.package }}" dist-tags
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
