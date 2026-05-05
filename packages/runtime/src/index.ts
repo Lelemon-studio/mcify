@@ -39,6 +39,8 @@ export { buildHandlerContext } from './context.js';
 export type { BuildContextOptions } from './context.js';
 export { createConsoleLogger } from './logger.js';
 export type { ConsoleLoggerOptions, LogLevel } from './logger.js';
+export { createPinoLogger } from './logger-pino.js';
+export type { PinoLoggerOptions, PinoLogLevel } from './logger-pino.js';
 
 // JSON-RPC primitives (useful when integrating with custom transports)
 export { ok, err, isJsonRpcRequest, isNotification, JsonRpcErrorCodes } from './jsonrpc.js';
