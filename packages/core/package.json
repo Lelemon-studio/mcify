@@ -35,5 +35,9 @@
     "lint": "echo \"(lint not configured yet)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
   }
 }
