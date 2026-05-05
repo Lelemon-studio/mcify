@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import type * as WsModuleNs from 'ws';
+import type * as HonoNodeServerNs from '@hono/node-server';
 import type { Config, HandlerContext } from '@mcify/core';
 
 type WsModule = typeof WsModuleNs;
+type HonoNodeServerModule = typeof HonoNodeServerNs;
 import { buildConfigSnapshot, EventBus, type ConfigSnapshot, type RuntimeEvent } from './events.js';
 import { dispatch } from './dispatch.js';
 import { buildHandlerContext } from './context.js';
@@ -62,8 +64,16 @@ const buildApp = (opts: {
     let body: unknown;
     try {
       body = await c.req.json();
-    } catch {
-      body = {};
+    } catch (e) {
+      // Reject malformed JSON explicitly — silently invoking with an empty
+      // body would mask a real client bug.
+      return c.json(
+        {
+          ok: false,
+          error: `Invalid JSON body: ${e instanceof Error ? e.message : 'parse error'}`,
+        },
+        400,
+      );
     }
     const args =
       body && typeof body === 'object' && 'args' in body ? (body as { args: unknown }).args : body;
@@ -136,15 +146,40 @@ export const startInspectorServer = async (
   });
 
   if (options.staticRoot) {
-    const { serveStatic } = await import('@hono/node-server/serve-static');
-    app.use('/*', serveStatic({ root: options.staticRoot }));
-    app.get('/*', serveStatic({ path: 'index.html', root: options.staticRoot }));
+    try {
+      const { serveStatic } = await import('@hono/node-server/serve-static');
+      app.use('/*', serveStatic({ root: options.staticRoot }));
+      app.get('/*', serveStatic({ path: 'index.html', root: options.staticRoot }));
+    } catch (e) {
+      throw new Error(
+        `inspector: '@hono/node-server' is required to serve static assets. ` +
+          `Install it as a dependency.\n  ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
 
-  const { serve } = await import('@hono/node-server');
-  // ws is loaded dynamically so this module stays importable on Workers.
-  // We declare the module type via a normal `import type` at file scope below.
-  const { WebSocketServer } = (await import('ws')) as WsModule;
+  let serve: HonoNodeServerModule['serve'];
+  try {
+    ({ serve } = (await import('@hono/node-server')) as HonoNodeServerModule);
+  } catch (e) {
+    throw new Error(
+      `inspector: '@hono/node-server' is required to start the inspector server. ` +
+        `Run \`pnpm add @hono/node-server\` (or npm/yarn equivalent).\n  ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
+  let WebSocketServer: WsModule['WebSocketServer'];
+  try {
+    // Loaded dynamically so this module stays importable on Workers (where
+    // `ws` does not run). The peer dependency is declared optional in
+    // package.json so users only pay for it when running `mcify dev`.
+    ({ WebSocketServer } = (await import('ws')) as WsModule);
+  } catch (e) {
+    throw new Error(
+      `inspector: 'ws' is required for the WebSocket telemetry feed. ` +
+        `Run \`pnpm add ws\` (or npm/yarn equivalent).\n  ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
 
   const httpServer = await new Promise<ReturnType<typeof serve>>((resolve, reject) => {
     const s = serve({ fetch: app.fetch, port, hostname }, () => resolve(s));
@@ -175,16 +210,27 @@ export const startInspectorServer = async (
     ws.send(JSON.stringify(hello));
 
     const off = bus.on((event) => {
-      if (ws.readyState === ws.OPEN) {
-        try {
-          ws.send(JSON.stringify(event));
-        } catch {
-          // Ignore stream errors — the close handler will clean up.
-        }
+      if (ws.readyState !== ws.OPEN) return;
+      try {
+        ws.send(JSON.stringify(event));
+      } catch (e) {
+        // Send can fail mid-flight (peer dropped, buffer full). Log it,
+        // unsubscribe so we don't leak the listener, and let the `close`
+        // handler do the rest of the cleanup.
+        logger.warn('inspector: WS send failed; unsubscribing client', {
+          eventType: event.type,
+          error: e instanceof Error ? e.message : String(e),
+        });
+        off();
       }
     });
     ws.on('close', () => off());
-    ws.on('error', () => off());
+    ws.on('error', (e) => {
+      logger.warn('inspector: WS client error', {
+        error: e instanceof Error ? e.message : String(e),
+      });
+      off();
+    });
   });
 
   const url = `http://${hostname === '0.0.0.0' || hostname === '::' ? 'localhost' : hostname}:${port}`;
@@ -207,10 +253,26 @@ export const startInspectorServer = async (
         promptCount: snapshot.prompts.length,
       });
     },
-    close: () =>
-      new Promise<void>((resolve, reject) => {
-        wss.close();
+    close: async () => {
+      // Terminate any open WS clients first so they don't keep the http
+      // server's connection counter alive past `close()`. `terminate()` is
+      // synchronous and shouldn't throw — but if it does, log instead of
+      // swallowing.
+      for (const client of wss.clients) {
+        try {
+          client.terminate();
+        } catch (e) {
+          logger.warn('inspector: failed to terminate WS client during close', {
+            error: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
+      await new Promise<void>((resolve, reject) => {
+        wss.close((err) => (err ? reject(err) : resolve()));
+      });
+      await new Promise<void>((resolve, reject) => {
         httpServer.close((err) => (err ? reject(err) : resolve()));
-      }),
+      });
+    },
   };
 };

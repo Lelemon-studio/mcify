@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ServerSnapshot } from '../../lib/types';
 import { api } from '../../lib/api';
 
@@ -14,6 +14,13 @@ export const PlaygroundTab = ({ snapshot }: { snapshot: ServerSnapshot }) => {
     () => snapshot.tools.find((t) => t.name === selectedTool),
     [snapshot.tools, selectedTool],
   );
+
+  // Switching tools wipes the previous args + response so old input from
+  // tool A doesn't leak into tool B's invocation.
+  useEffect(() => {
+    setArgsText('{}');
+    setResponse(null);
+  }, [selectedTool]);
 
   if (snapshot.tools.length === 0) {
     return (
@@ -65,10 +72,7 @@ export const PlaygroundTab = ({ snapshot }: { snapshot: ServerSnapshot }) => {
         </label>
         <select
           value={selectedTool}
-          onChange={(e) => {
-            setSelectedTool(e.target.value);
-            setResponse(null);
-          }}
+          onChange={(e) => setSelectedTool(e.target.value)}
           style={{ width: '100%', marginBottom: 16 }}
         >
           {snapshot.tools.map((t) => (

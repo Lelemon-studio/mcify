@@ -289,6 +289,43 @@ a:hover {
   background: var(--bg-elev);
 }
 
+.calls-table__row {
+  cursor: pointer;
+}
+
+/* Detail drawer for a call */
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 50;
+}
+
+.drawer-panel {
+  width: min(640px, 90vw);
+  background: var(--bg-elev);
+  border-left: 1px solid var(--border);
+  padding: 20px;
+  overflow: auto;
+}
+
+.call-detail__meta {
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.call-detail__label {
+  font-size: 11px;
+  margin: 12px 0 4px;
+}
+
+.call-detail__error {
+  color: var(--error);
+}
+
 .tag {
   display: inline-block;
   padding: 1px 7px;

@@ -41,8 +41,9 @@ describe('EventBus', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 
-  it('isolates listener errors', () => {
-    const bus = new EventBus();
+  it('isolates listener errors and surfaces them via onListenerError', () => {
+    const onListenerError = vi.fn();
+    const bus = new EventBus({ onListenerError });
     const ok = vi.fn();
     bus.on(() => {
       throw new Error('boom');
@@ -59,6 +60,11 @@ describe('EventBus', () => {
       promptCount: 0,
     });
     expect(ok).toHaveBeenCalledTimes(1);
+    expect(onListenerError).toHaveBeenCalledTimes(1);
+    const [err, event] = onListenerError.mock.calls[0]!;
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe('boom');
+    expect((event as { type: string }).type).toBe('config:loaded');
   });
 
   it('survives a listener that unsubscribes during emit', () => {

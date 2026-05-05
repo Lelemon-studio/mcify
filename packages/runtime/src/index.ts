@@ -55,6 +55,8 @@ export { EventBus, buildConfigSnapshot } from './events.js';
 export type {
   RuntimeEvent,
   RuntimeEventListener,
+  EventBusOptions,
+  EventBusErrorHandler,
   ToolCalledEvent,
   ResourceReadEvent,
   PromptRenderedEvent,

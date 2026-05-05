@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ToolCalledEvent } from '../../lib/types';
 
 const truncate = (value: unknown, max = 48): string => {
@@ -50,7 +50,7 @@ export const CallsTab = ({ calls }: { calls: ToolCalledEvent[] }) => {
         </thead>
         <tbody>
           {calls.map((c) => (
-            <tr key={c.id} onClick={() => setSelected(c)} style={{ cursor: 'pointer' }}>
+            <tr key={c.id} className="calls-table__row" onClick={() => setSelected(c)}>
               <td className="faint">{formatTime(c.timestamp)}</td>
               <td>{c.toolName}</td>
               <td className="muted">{truncate(c.args, 48)}</td>
@@ -79,47 +79,42 @@ export const CallsTab = ({ calls }: { calls: ToolCalledEvent[] }) => {
   );
 };
 
-const CallDetailPanel = ({ call, onClose }: { call: ToolCalledEvent; onClose: () => void }) => (
-  <div
-    style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'flex-end',
-      zIndex: 50,
-    }}
-    onClick={onClose}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: 'min(640px, 90vw)',
-        background: 'var(--bg-elev)',
-        borderLeft: '1px solid var(--border)',
-        padding: '20px',
-        overflow: 'auto',
-      }}
-    >
-      <div className="title-row">
-        <h2>{call.toolName}</h2>
-        <button onClick={onClose}>Close</button>
+const CallDetailPanel = ({ call, onClose }: { call: ToolCalledEvent; onClose: () => void }) => {
+  // ESC closes — standard modal/drawer behavior. Keyboard parity with the
+  // click-on-backdrop fallback.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="drawer-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="call-detail-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="title-row">
+          <h2 id="call-detail-title">{call.toolName}</h2>
+          <button onClick={onClose}>Close</button>
+        </div>
+        <div className="muted mono call-detail__meta">
+          {call.timestamp} · {call.durationMs}ms
+        </div>
+        <div className="muted call-detail__label">ARGS</div>
+        <pre>{JSON.stringify(call.args, null, 2)}</pre>
+        <div className="muted call-detail__label">{call.error ? 'ERROR' : 'RESULT'}</div>
+        <pre className={call.error ? 'call-detail__error' : undefined}>
+          {call.error
+            ? `${call.error.message}${call.error.phase ? ` (phase: ${call.error.phase})` : ''}`
+            : JSON.stringify(call.result, null, 2)}
+        </pre>
       </div>
-      <div className="muted mono" style={{ fontSize: 12, marginBottom: 16 }}>
-        {call.timestamp} · {call.durationMs}ms
-      </div>
-      <div className="muted" style={{ fontSize: 11, margin: '8px 0 4px' }}>
-        ARGS
-      </div>
-      <pre>{JSON.stringify(call.args, null, 2)}</pre>
-      <div className="muted" style={{ fontSize: 11, margin: '12px 0 4px' }}>
-        {call.error ? 'ERROR' : 'RESULT'}
-      </div>
-      <pre style={{ color: call.error ? 'var(--error)' : undefined }}>
-        {call.error
-          ? `${call.error.message}${call.error.phase ? ` (phase: ${call.error.phase})` : ''}`
-          : JSON.stringify(call.result, null, 2)}
-      </pre>
     </div>
-  </div>
-);
+  );
+};

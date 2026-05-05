@@ -3,24 +3,19 @@ import path from 'node:path';
 import { log } from '../logger.js';
 import { getTemplatesRoot } from '../paths.js';
 import { getString, type ParsedArgs } from '../args.js';
+import { fileExists, isErrnoException } from '../utils/fs.js';
 
 const TEMPLATE_PLACEHOLDER = /\{\{(\w+)\}\}/g;
-
-const fileExists = async (target: string): Promise<boolean> => {
-  try {
-    await fs.access(target);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const listTemplates = async (root: string): Promise<string[]> => {
   try {
     const entries = await fs.readdir(root, { withFileTypes: true });
     return entries.filter((e) => e.isDirectory()).map((e) => e.name);
-  } catch {
-    return [];
+  } catch (e) {
+    // A missing templates dir is the only "this is fine, no templates" case.
+    // Anything else (EACCES, EIO, ENOTDIR) is a real problem we want to surface.
+    if (isErrnoException(e) && e.code === 'ENOENT') return [];
+    throw e;
   }
 };
 
@@ -37,8 +32,23 @@ const renderTemplateString = (content: string, variables: Record<string, string>
 const isLikelyText = (filename: string): boolean => {
   const ext = path.extname(filename).toLowerCase();
   return [
-    '.ts', '.tsx', '.js', '.jsx', '.json', '.md', '.mdx', '.txt', '.yml', '.yaml',
-    '.toml', '.css', '.html', '.gitignore', '.npmrc', '.editorconfig', '',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.json',
+    '.md',
+    '.mdx',
+    '.txt',
+    '.yml',
+    '.yaml',
+    '.toml',
+    '.css',
+    '.html',
+    '.gitignore',
+    '.npmrc',
+    '.editorconfig',
+    '',
   ].includes(ext);
 };
 

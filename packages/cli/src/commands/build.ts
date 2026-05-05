@@ -3,18 +3,10 @@ import path from 'node:path';
 import * as esbuild from 'esbuild';
 import { getString, getBoolean, type ParsedArgs } from '../args.js';
 import { log } from '../logger.js';
+import { fileExists, isErrnoException } from '../utils/fs.js';
 
 const SUPPORTED_TARGETS = ['node'] as const;
 type Target = (typeof SUPPORTED_TARGETS)[number];
-
-const fileExists = async (target: string): Promise<boolean> => {
-  try {
-    await fs.access(target);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const buildEntryFor = (target: Target, configPath: string): string => {
   if (target === 'node') {
@@ -67,7 +59,17 @@ export const buildServer = async (
       },
     });
   } finally {
-    await fs.unlink(entryPath).catch(() => undefined);
+    // The entry file is generated only for esbuild — clean it up after the
+    // build whether or not the build itself succeeded. ENOENT is fine
+    // (build wrote the entry but esbuild already inlined it; or the build
+    // crashed before write). Anything else surfaces.
+    try {
+      await fs.unlink(entryPath);
+    } catch (e) {
+      if (!(isErrnoException(e) && e.code === 'ENOENT')) {
+        log.warn(`could not remove temporary entry: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
   }
 
   return { outFile, durationMs: Date.now() - start };

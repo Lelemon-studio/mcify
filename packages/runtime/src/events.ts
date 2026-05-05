@@ -61,14 +61,35 @@ export type RuntimeEvent =
 
 export type RuntimeEventListener = (event: RuntimeEvent) => void;
 
+export type EventBusErrorHandler = (error: unknown, event: RuntimeEvent) => void;
+
+export interface EventBusOptions {
+  /**
+   * Called when a listener throws during {@link EventBus.emit}. Errors are
+   * isolated so one bad listener can't stop delivery to siblings, but they
+   * are never silently swallowed. Default: writes to `console.error`.
+   * Pass a custom handler to route through your logger.
+   */
+  onListenerError?: EventBusErrorHandler;
+}
+
+const defaultListenerErrorHandler: EventBusErrorHandler = (error, event) => {
+  console.error('[mcify EventBus] listener threw while handling', event.type, error);
+};
+
 /**
  * Tiny pub/sub for runtime telemetry. We don't use Node's `EventEmitter` —
  * it's not Workers-friendly, and we want strict typing without the `any`
  * implicit on `.on()`.
  */
 export class EventBus {
-  private listeners = new Set<RuntimeEventListener>();
+  private readonly listeners = new Set<RuntimeEventListener>();
+  private readonly onListenerError: EventBusErrorHandler;
   private counter = 0;
+
+  constructor(options: EventBusOptions = {}) {
+    this.onListenerError = options.onListenerError ?? defaultListenerErrorHandler;
+  }
 
   on(listener: RuntimeEventListener): () => void {
     this.listeners.add(listener);
@@ -81,8 +102,10 @@ export class EventBus {
     for (const listener of snapshot) {
       try {
         listener(event);
-      } catch {
-        // Listener errors are isolated — the bus must keep delivering.
+      } catch (e) {
+        // Errors are isolated — the bus must keep delivering — but we
+        // never silently swallow. The handler decides what to do.
+        this.onListenerError(e, event);
       }
     }
   }

@@ -32,10 +32,13 @@ export const connectEventStream = (
       try {
         const parsed = JSON.parse(event.data as string) as RuntimeEvent;
         onEvent(parsed);
-      } catch {
-        // ignore malformed payloads — server bug, surface in console
-
-        console.warn('inspector: dropped malformed event', event.data);
+      } catch (e) {
+        // Malformed payload from the server is a bug worth surfacing —
+        // but not so bad that we should sever the stream. Log and continue.
+        console.warn('[mcify inspector] dropped malformed event', {
+          error: e instanceof Error ? e.message : String(e),
+          data: event.data,
+        });
       }
     };
     ws.onclose = () => {

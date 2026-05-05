@@ -58,10 +58,16 @@ export default function App() {
       }
       if (event.type === 'config:loaded') {
         // Refresh the snapshot whenever the runtime says config changed.
+        // We don't fail the whole inspector if this transient fetch flakes —
+        // the next config:loaded will retry — but we do surface the error.
         api
           .server()
           .then(setSnapshot)
-          .catch(() => undefined);
+          .catch((e: unknown) => {
+            console.warn('[mcify inspector] failed to refresh snapshot', {
+              error: e instanceof Error ? e.message : String(e),
+            });
+          });
       }
     }, setWsStatus);
     return close;

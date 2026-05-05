@@ -1,4 +1,3 @@
-import { promises as fs } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import chokidar from 'chokidar';
@@ -9,29 +8,30 @@ import { startInspectorServer, type InspectorServer } from '@mcify/runtime/inspe
 import { loadConfig } from '../config-loader.js';
 import { getString, getBoolean, type ParsedArgs } from '../args.js';
 import { log } from '../logger.js';
-
-const fileExists = async (target: string): Promise<boolean> => {
-  try {
-    await fs.access(target);
-    return true;
-  } catch {
-    return false;
-  }
-};
+import { fileExists, isErrnoException } from '../utils/fs.js';
 
 /**
  * Resolve the on-disk path of `@mcify/inspector`'s built static assets.
- * Returns null if the package isn't installed (the inspector UI is then
- * unavailable; the API + WS still work for advanced users).
+ * Returns null **only** when the package is genuinely not installed
+ * (`MODULE_NOT_FOUND`). Any other error — broken install, malformed
+ * package.json, etc. — is propagated so we never silently degrade.
  */
 const resolveInspectorStaticRoot = (): string | null => {
   try {
     const require_ = createRequire(import.meta.url);
     const pkgPath = require_.resolve('@mcify/inspector/package.json');
-    const distPath = path.join(path.dirname(pkgPath), 'dist');
-    return distPath;
-  } catch {
-    return null;
+    return path.join(path.dirname(pkgPath), 'dist');
+  } catch (e) {
+    if (isErrnoException(e) && e.code === 'MODULE_NOT_FOUND') return null;
+    throw e;
+  }
+};
+
+const closeQuietly = async (label: string, fn: () => Promise<void>): Promise<void> => {
+  try {
+    await fn();
+  } catch (e) {
+    log.warn(`${label} failed to close cleanly: ${e instanceof Error ? e.message : String(e)}`);
   }
 };
 
@@ -154,8 +154,10 @@ export const runDev = async (args: ParsedArgs): Promise<void> => {
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
     log.info(`received ${signal}, shutting down`);
-    if (inspector) await inspector.close().catch(() => undefined);
-    if (server) await server.close().catch(() => undefined);
+    const currentInspector = inspector;
+    const currentServer = server;
+    if (currentInspector) await closeQuietly('inspector', () => currentInspector.close());
+    if (currentServer) await closeQuietly('mcp server', () => currentServer.close());
     process.exit(0);
   };
   process.on('SIGINT', () => void shutdown('SIGINT'));
