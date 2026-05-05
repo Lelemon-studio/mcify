@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / Usage help
+    url: https://github.com/Lelemon-studio/mcify/discussions
+    about: For questions about how to use mcify, please open a Discussion. Issues are reserved for bugs and concrete proposals.
+  - name: Security vulnerability
+    url: https://github.com/Lelemon-studio/mcify/security/advisories/new
+    about: Report security issues privately via GitHub Security Advisories. Do not file a public issue.
