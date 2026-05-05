@@ -4,6 +4,7 @@ import { runInit } from './commands/init.js';
 import { runDev } from './commands/dev.js';
 import { runBuild } from './commands/build.js';
 import { runGenerate } from './commands/generate.js';
+import { runDeploy } from './commands/deploy.js';
 import { log } from './logger.js';
 import { version } from './index.js';
 
@@ -28,6 +29,13 @@ Commands:
                              --out <path>          Default: ./dist
                              --config <path>       Default: ./mcify.config.ts
                              --bundle-deps         Inline node_modules into the output
+
+  deploy <target>          Deploy to a hosting target
+                             cloudflare            Cloudflare Workers (via wrangler)
+                             vercel                Vercel Edge Functions
+                             docker                Build a Docker image (optional push)
+                             --dry-run             Don't actually deploy
+                             --help                Per-target options
 
   generate                 Emit a typed client stub from your config
                              --config <path>       Default: ./mcify.config.ts
@@ -61,6 +69,9 @@ const main = async (): Promise<void> => {
       return;
     case 'build':
       await runBuild(args);
+      return;
+    case 'deploy':
+      await runDeploy(args);
       return;
     case 'generate':
       await runGenerate(args);
