@@ -133,13 +133,13 @@ For AI agents working in mcify projects:
 
 ## Anti-patterns to avoid
 
-- ❌ `console.log` in committed code → use `ctx.logger.info('msg', { meta })`.
-- ❌ Raw `fetch(...)` in handlers → use `ctx.fetch` so tests can swap it.
-- ❌ Manual `if (typeof x !== ...)` validation → Zod `input:` schema validates at the boundary.
-- ❌ Wrapping handlers in `try/catch` to log errors → just `throw`; the runtime emits `tool:called` events with error attached.
-- ❌ Reading secrets at module load time in `mcify.config.ts` → read inside the handler or pass via the client constructor.
-- ❌ Per-tool retry/cache logic → use a middleware so it composes cleanly.
-- ❌ `console.log(amount)` at info level for payment data → debug level only, treat anything tied to a transaction as PII-adjacent.
+- Don't`console.log` in committed code → use `ctx.logger.info('msg', { meta })`.
+- Don'tRaw `fetch(...)` in handlers → use `ctx.fetch` so tests can swap it.
+- Don'tManual `if (typeof x !== ...)` validation → Zod `input:` schema validates at the boundary.
+- Don'tWrapping handlers in `try/catch` to log errors → just `throw`; the runtime emits `tool:called` events with error attached.
+- Don'tReading secrets at module load time in `mcify.config.ts` → read inside the handler or pass via the client constructor.
+- Don'tPer-tool retry/cache logic → use a middleware so it composes cleanly.
+- Don't`console.log(amount)` at info level for payment data → debug level only, treat anything tied to a transaction as PII-adjacent.
 
 ## Reference connectors
 

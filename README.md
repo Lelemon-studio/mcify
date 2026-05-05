@@ -124,32 +124,32 @@ Use the `@alpha` dist-tag while we cut V1.
 
 ## Examples
 
-| Connector                                                  | Status                                          |
-| ---------------------------------------------------------- | ----------------------------------------------- |
-| [Khipu](./packages/examples/khipu) — Chilean payment links | ✅ live · `mcify init --template example-khipu` |
-| Bsale — Chilean DTE / billing                              | planned                                         |
-| Fintoc — banking aggregation                               | planned                                         |
+| Connector                                                  | Status                                            |
+| ---------------------------------------------------------- | ------------------------------------------------- |
+| [Khipu](./packages/examples/khipu) — Chilean payment links | done live · `mcify init --template example-khipu` |
+| Bsale — Chilean DTE / billing                              | planned                                           |
+| Fintoc — banking aggregation                               | planned                                           |
 
 ## Roadmap
 
-| Phase                            | Status     | What ships                                                             |
-| -------------------------------- | ---------- | ---------------------------------------------------------------------- |
-| A. Core lib + CLI                | ✅         | `init`, `dev`, `build`, `generate` end-to-end with hot reload          |
-| B. Inspector                     | ✅ slice 1 | Local web UI with tools, calls log, playground                         |
-| C. Examples + AGENTS.md template | ✅         | Khipu connector, AGENTS.md in `from-scratch`, `example-khipu` template |
-| D. Deploy targets                | ✅ slice 1 | Cloudflare Workers, Vercel Edge, Docker (Fly + Railway next)           |
-| E. mcify Cloud                   | V2         | Multi-tenant hosting at `mcify.cloud`                                  |
-| F. Marketplace                   | V2         | Shared registry of community MCPs at `mcify.dev/registry`              |
+| Phase                            | Status       | What ships                                                             |
+| -------------------------------- | ------------ | ---------------------------------------------------------------------- |
+| A. Core lib + CLI                | done         | `init`, `dev`, `build`, `generate` end-to-end with hot reload          |
+| B. Inspector                     | done slice 1 | Local web UI with tools, calls log, playground                         |
+| C. Examples + AGENTS.md template | done         | Khipu connector, AGENTS.md in `from-scratch`, `example-khipu` template |
+| D. Deploy targets                | done slice 1 | Cloudflare Workers, Vercel Edge, Docker (Fly + Railway next)           |
+| E. mcify Cloud                   | V2           | Multi-tenant hosting at `mcify.cloud`                                  |
+| F. Marketplace                   | V2           | Shared registry of community MCPs at `mcify.dev/registry`              |
 
 ## For AI agents
 
 Working on this codebase with Claude Code, Cursor, or any other AI assistant?
 
-- 📘 **[AGENTS.md](./AGENTS.md)** — universal contract: invariants, conventions, anti-patterns we've already hit.
-- 🤖 **[CLAUDE.md](./CLAUDE.md)** — Claude Code specific (slash commands, subagents).
-- 📋 **[`.claude/commands/`](./.claude/commands/)** — `/check`, `/release`, `/add-tool` slash commands.
-- 🧠 **[llms.txt](https://mcify.dev/llms.txt)** — dense LLM-optimized summary of the API surface.
-- 📐 **[ADRs](./docs/decisions/)** — architectural decisions, why we chose what we chose.
+- **[AGENTS.md](./AGENTS.md)** — universal contract: invariants, conventions, anti-patterns we've already hit.
+- **[CLAUDE.md](./CLAUDE.md)** — Claude Code specific (slash commands, subagents).
+- **[`.claude/commands/`](./.claude/commands/)** — `/check`, `/release`, `/add-tool` slash commands.
+- **[llms.txt](https://mcify.dev/llms.txt)** — dense LLM-optimized summary of the API surface.
+- **[ADRs](./docs/decisions/)** — architectural decisions, why we chose what we chose.
 
 ## Contributing
 
