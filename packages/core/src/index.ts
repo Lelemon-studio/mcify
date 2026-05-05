@@ -33,7 +33,7 @@ export type {
 
 // Config
 export { defineConfig } from './config.js';
-export type { Config } from './config.js';
+export type { Config, AnyTool } from './config.js';
 
 // Auth — `bearer`, `apiKey`, `oauth` are exported as top-level for convenience.
 // `none` is intentionally only available via the `auth` namespace below to avoid

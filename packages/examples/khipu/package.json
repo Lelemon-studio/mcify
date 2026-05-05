@@ -1,0 +1,37 @@
+{
+  "name": "@mcify/example-khipu",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Khipu (Chile) MCP server — example connector built with mcify.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu#readme",
+  "bugs": "https://github.com/Lelemon-studio/mcify/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lelemon-studio/mcify.git",
+    "directory": "packages/examples/khipu"
+  },
+  "author": "Lelemon Studio <contacto@lelemon.cl>",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo \"(lint runs at root)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@mcify/core": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@mcify/runtime": "workspace:*"
+  }
+}

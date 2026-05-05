@@ -7,6 +7,12 @@ export interface TestClientOptions {
   auth?: AuthState;
   /** Logger override (default: silent). */
   logger?: Logger;
+  /**
+   * `fetch` implementation passed to handlers via `ctx.fetch`. Use this to
+   * mock outbound HTTP calls in tests without monkey-patching globals.
+   * Defaults to `globalThis.fetch`.
+   */
+  fetch?: typeof globalThis.fetch;
 }
 
 export interface ToolErrorResult {
@@ -72,6 +78,7 @@ const buildClient = (config: Config, options: TestClientOptions = {}): TestClien
     buildHandlerContext({
       auth,
       logger: options.logger ?? noopLogger,
+      ...(options.fetch ? { fetchImpl: options.fetch } : {}),
     });
 
   return {
