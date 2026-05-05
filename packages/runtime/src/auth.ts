@@ -20,6 +20,23 @@ export const getProcessEnv = (): EnvSource => {
 const headerLookup = (headers: Headers, name: string): string | null =>
   headers.get(name) ?? headers.get(name.toLowerCase());
 
+/**
+ * Constant-time string comparison. Avoids leaking the matched prefix length
+ * via timing analysis. Length difference is observable — the industry consensus
+ * is that this is acceptable for token verification (cf. `crypto.timingSafeEqual`).
+ *
+ * Implemented in pure JS (no Web Crypto, no Node `crypto`) so it runs unchanged
+ * on Node, Bun, Deno, and Cloudflare Workers.
+ */
+export const constantTimeEqual = (a: string, b: string): boolean => {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+};
+
 export const resolveAuthFromHeaders = async (
   authConfig: AuthConfig | undefined,
   headers: Headers,
@@ -42,7 +59,7 @@ export const resolveAuthFromHeaders = async (
       if (!ok) throw new McifyAuthError('Invalid Bearer token');
     } else {
       const expected = env[authConfig.env];
-      if (!expected || token !== expected) {
+      if (!expected || !constantTimeEqual(token, expected)) {
         throw new McifyAuthError('Invalid Bearer token');
       }
     }
@@ -59,7 +76,7 @@ export const resolveAuthFromHeaders = async (
       if (!ok) throw new McifyAuthError('Invalid API key');
     } else {
       const expected = env[authConfig.env];
-      if (!expected || key !== expected) {
+      if (!expected || !constantTimeEqual(key, expected)) {
         throw new McifyAuthError('Invalid API key');
       }
     }

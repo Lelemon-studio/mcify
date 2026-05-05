@@ -65,6 +65,11 @@ describe('createHttpHandler', () => {
       jsonrpc: '2.0',
       id: 1,
       method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'test-client', version: '1.0.0' },
+      },
     });
     const initJson = (await initRes.json()) as { result: { protocolVersion: string } };
     expect(typeof initJson.result.protocolVersion).toBe('string');

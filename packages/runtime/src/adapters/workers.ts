@@ -1,6 +1,5 @@
 import type { Config } from '@mcify/core';
 import { createHttpApp, type HttpHandlerOptions } from '../http.js';
-import type { EnvSource } from '../auth.js';
 
 export type WorkersFetchHandler = (
   request: Request,
@@ -8,24 +7,14 @@ export type WorkersFetchHandler = (
   ctx?: unknown,
 ) => Promise<Response>;
 
-export interface WorkersHandlerOptions extends HttpHandlerOptions {
-  /**
-   * Map the Workers `env` argument into the env source used by auth resolution.
-   * Defaults to passing `env` through as `EnvSource` (string values only).
-   */
-  envFromBindings?: (env: Record<string, unknown>) => EnvSource;
-}
-
-const defaultEnvFromBindings = (env: Record<string, unknown>): EnvSource => {
-  const out: EnvSource = {};
-  for (const [k, v] of Object.entries(env)) {
-    if (typeof v === 'string') out[k] = v;
-  }
-  return out;
-};
+export type WorkersHandlerOptions = HttpHandlerOptions;
 
 /**
  * Build a Cloudflare Workers `fetch` handler.
+ *
+ * The Hono app is built once and reused across requests. Each request reads
+ * its env via `c.env` (Hono passes the second `fetch` argument through), so
+ * Workers' per-request bindings are resolved lazily without rebuilding routes.
  *
  * Usage:
  *
@@ -35,18 +24,26 @@ const defaultEnvFromBindings = (env: Record<string, unknown>): EnvSource => {
  *
  * export default { fetch: createWorkersHandler(config) };
  * ```
+ *
+ * Custom env mapping (e.g. renaming bindings):
+ *
+ * ```ts
+ * createWorkersHandler(config, {
+ *   env: (c) => ({ KHIPU_API_KEY: c.env.KHIPU_KEY as string }),
+ * });
+ * ```
  */
 export const createWorkersHandler = (
   config: Config,
   options: WorkersHandlerOptions = {},
 ): WorkersFetchHandler => {
-  const envFromBindings = options.envFromBindings ?? defaultEnvFromBindings;
-  return async (request, env) => {
-    const resolvedEnv = env ? envFromBindings(env) : options.env;
-    const app = createHttpApp(config, {
-      ...options,
-      ...(resolvedEnv ? { env: resolvedEnv } : {}),
-    });
-    return app.fetch(request);
-  };
+  const app = createHttpApp(config, options);
+  return (request, env, ctx) =>
+    app.fetch(request, env as Record<string, unknown>, ctx as ExecutionContext | undefined);
 };
+
+// Minimal Workers ExecutionContext type so we don't pull in @cloudflare/workers-types as a hard dep.
+interface ExecutionContext {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+}

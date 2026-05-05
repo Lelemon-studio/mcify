@@ -6,7 +6,7 @@ export { dispatch, matchUriTemplate } from './dispatch.js';
 
 // HTTP transport
 export { createHttpApp, createHttpHandler } from './http.js';
-export type { HttpHandlerOptions, FetchHandler } from './http.js';
+export type { HttpHandlerOptions, FetchHandler, EnvProvider } from './http.js';
 
 // Stdio transport
 export { serveStdio } from './stdio.js';
@@ -26,7 +26,12 @@ export type {
 } from './adapters/workers.js';
 
 // Auth
-export { McifyAuthError, resolveAuthFromHeaders, getProcessEnv } from './auth.js';
+export {
+  McifyAuthError,
+  resolveAuthFromHeaders,
+  getProcessEnv,
+  constantTimeEqual,
+} from './auth.js';
 export type { EnvSource } from './auth.js';
 
 // Context + logger

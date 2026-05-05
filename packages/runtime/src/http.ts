@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import type { Config, Logger } from '@mcify/core';
 import { buildHandlerContext } from './context.js';
 import { dispatch } from './dispatch.js';
@@ -7,23 +7,62 @@ import { err, JsonRpcErrorCodes as Codes } from './jsonrpc.js';
 import { createConsoleLogger } from './logger.js';
 import { RUNTIME_VERSION } from './version.js';
 
+export type EnvProvider = EnvSource | ((c: Context) => EnvSource);
+
 export interface HttpHandlerOptions {
   /** Path the MCP endpoint is mounted at. Defaults to `/mcp`. */
   path?: string;
   /** Logger to use for runtime + per-request logging. */
   logger?: Logger;
-  /** Environment source for resolving auth secrets. Defaults to `process.env` when available. */
-  env?: EnvSource;
+  /**
+   * Source for env variables used during auth resolution.
+   * - A static {@link EnvSource} (e.g. for tests).
+   * - A function returning an EnvSource per request — useful on Cloudflare
+   *   Workers, where env comes from request bindings.
+   *
+   * Default: extracts string bindings from `c.env` when present, otherwise
+   * falls back to `process.env` (Node, Bun).
+   */
+  env?: EnvProvider;
   /** Enable a `GET /` health response. Defaults to true. */
   health?: boolean;
 }
 
 export type FetchHandler = (request: Request) => Promise<Response>;
 
+const stringBindingsFromEnv = (raw: unknown): EnvSource => {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: EnvSource = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof v === 'string') out[k] = v;
+  }
+  return out;
+};
+
+const resolveEnv = (c: Context, override: EnvProvider | undefined): EnvSource => {
+  if (typeof override === 'function') return override(c);
+  if (override) return override;
+  const fromBindings = stringBindingsFromEnv(c.env);
+  if (Object.keys(fromBindings).length > 0) return fromBindings;
+  return getProcessEnv();
+};
+
+const buildRequestLoggerBindings = (
+  requestId: string | undefined,
+  body: unknown,
+): Record<string, unknown> => {
+  const bindings: Record<string, unknown> = {};
+  if (requestId) bindings['requestId'] = requestId;
+  if (body && typeof body === 'object' && 'method' in body) {
+    const method = (body as { method?: unknown }).method;
+    if (typeof method === 'string') bindings['method'] = method;
+  }
+  return bindings;
+};
+
 export const createHttpApp = (config: Config, options: HttpHandlerOptions = {}): Hono => {
   const path = options.path ?? '/mcp';
   const logger = options.logger ?? createConsoleLogger({ bindings: { server: config.name } });
-  const env = options.env ?? getProcessEnv();
   const app = new Hono();
 
   if (options.health !== false) {
@@ -45,12 +84,9 @@ export const createHttpApp = (config: Config, options: HttpHandlerOptions = {}):
       return c.json(err(null, Codes.ParseError, 'Invalid JSON body'), 400);
     }
 
-    const requestId =
-      c.req.header('mcp-request-id') ?? c.req.header('x-request-id') ?? undefined;
-    const reqLogger = logger.child({
-      ...(requestId ? { requestId } : {}),
-      method: typeof body === 'object' && body !== null ? (body as { method?: string }).method : undefined,
-    });
+    const requestId = c.req.header('mcp-request-id') ?? c.req.header('x-request-id');
+    const reqLogger = logger.child(buildRequestLoggerBindings(requestId, body));
+    const env = resolveEnv(c, options.env);
 
     let authState;
     try {

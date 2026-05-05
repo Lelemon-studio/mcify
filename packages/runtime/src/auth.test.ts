@@ -1,6 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { auth, bearer, apiKey } from '@mcify/core';
-import { McifyAuthError, resolveAuthFromHeaders } from './auth.js';
+import { McifyAuthError, constantTimeEqual, resolveAuthFromHeaders } from './auth.js';
+
+describe('constantTimeEqual', () => {
+  it('returns true for equal strings', () => {
+    expect(constantTimeEqual('abc-123', 'abc-123')).toBe(true);
+  });
+  it('returns false for different content', () => {
+    expect(constantTimeEqual('abc-123', 'abc-124')).toBe(false);
+  });
+  it('returns false for different lengths', () => {
+    expect(constantTimeEqual('abc', 'abcd')).toBe(false);
+  });
+  it('returns true for empty strings', () => {
+    expect(constantTimeEqual('', '')).toBe(true);
+  });
+});
 
 describe('resolveAuthFromHeaders', () => {
   describe('none / undefined config', () => {

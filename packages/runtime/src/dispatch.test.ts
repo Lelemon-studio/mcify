@@ -28,9 +28,15 @@ describe('dispatch', () => {
   });
 
   describe('initialize', () => {
+    const initParams = {
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      clientInfo: { name: 'test-client', version: '1.0.0' },
+    };
+
     it('returns protocolVersion + capabilities + serverInfo', async () => {
       const res = await dispatch(
-        { jsonrpc: '2.0', id: 1, method: 'initialize' },
+        { jsonrpc: '2.0', id: 1, method: 'initialize', params: initParams },
         buildSampleConfig(),
         ctx(),
       );
@@ -43,6 +49,15 @@ describe('dispatch', () => {
           serverInfo: { name: 'sample-server', version: '0.1.0' },
         },
       });
+    });
+
+    it('rejects malformed initialize params with InvalidParams', async () => {
+      const res = await dispatch(
+        { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: 123 } },
+        buildSampleConfig(),
+        ctx(),
+      );
+      expect(res).toMatchObject({ error: { code: Codes.InvalidParams } });
     });
   });
 

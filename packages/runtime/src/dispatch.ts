@@ -1,6 +1,13 @@
 import type { Config, HandlerContext, Resource, Tool, Prompt } from '@mcify/core';
 import { McifyValidationError } from '@mcify/core';
 import {
+  CallToolRequestParamsSchema,
+  GetPromptRequestParamsSchema,
+  InitializeRequestParamsSchema,
+  ReadResourceRequestParamsSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import type { z, ZodTypeAny } from 'zod';
+import {
   err,
   isJsonRpcRequest,
   isNotification,
@@ -52,7 +59,6 @@ export const matchUriTemplate = (
   // avoids double-escaping the braces themselves.
   const parts: string[] = [];
   let lastIndex = 0;
-  // Reset lastIndex on the shared regex literal.
   const re = new RegExp(PLACEHOLDER_PATTERN.source, 'g');
   let match: RegExpExecArray | null;
   while ((match = re.exec(template)) !== null) {
@@ -71,12 +77,13 @@ const findResourceForUri = (
   config: Config,
   uri: string,
 ): { resource: Resource; params: Record<string, string> | null } | null => {
-  for (const r of config.resources ?? []) {
+  const resources = config.resources ?? [];
+  for (const r of resources) {
     if (!r.isTemplate && r.uri === uri) {
       return { resource: r, params: null };
     }
   }
-  for (const r of config.resources ?? []) {
+  for (const r of resources) {
     if (r.isTemplate) {
       const params = matchUriTemplate(r.uri, uri);
       if (params) return { resource: r, params };
@@ -95,20 +102,21 @@ const handleListTools = (config: Config) => ({
   tools: (config.tools ?? []).map(toMcpToolListItem),
 });
 
+interface CallToolResult {
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+}
+
 const handleCallTool = async (
   config: Config,
   ctx: HandlerContext,
   params: { name: string; arguments?: unknown },
-) => {
+): Promise<CallToolResult | null> => {
   const tool = config.tools?.find((t) => t.name === params.name);
-  if (!tool) {
-    return null; // signal not-found via outer try/catch
-  }
+  if (!tool) return null;
   try {
     const result = await tool.invoke(params.arguments ?? {}, ctx);
-    return {
-      content: [{ type: 'text' as const, text: JSON.stringify(result) }],
-    };
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
   } catch (e) {
     if (e instanceof McifyValidationError) {
       return {
@@ -142,11 +150,7 @@ const handleListResourceTemplates = (config: Config) => ({
     })),
 });
 
-const handleReadResource = async (
-  config: Config,
-  ctx: HandlerContext,
-  params: { uri: string },
-) => {
+const handleReadResource = async (config: Config, ctx: HandlerContext, params: { uri: string }) => {
   const match = findResourceForUri(config, params.uri);
   if (!match) return null;
   const content = await match.resource.read(match.params ?? {}, ctx);
@@ -183,6 +187,15 @@ const handleGetPrompt = async (
   };
 };
 
+const parseParams = <S extends ZodTypeAny>(
+  schema: S,
+  rawParams: unknown,
+): { ok: true; data: z.infer<S> } | { ok: false; issues: z.ZodIssue[] } => {
+  const result = schema.safeParse(rawParams ?? {});
+  if (result.success) return { ok: true, data: result.data };
+  return { ok: false, issues: result.error.issues };
+};
+
 export const dispatch = async (
   raw: unknown,
   config: Config,
@@ -198,8 +211,15 @@ export const dispatch = async (
 
   try {
     switch (request.method) {
-      case 'initialize':
+      case 'initialize': {
+        const parsed = parseParams(InitializeRequestParamsSchema, request.params);
+        if (!parsed.ok) {
+          return notification
+            ? null
+            : err(id, Codes.InvalidParams, 'Invalid initialize params', { issues: parsed.issues });
+        }
         return notification ? null : ok(id, handleInitialize(config));
+      }
 
       case 'notifications/initialized':
       case 'notifications/cancelled':
@@ -212,14 +232,16 @@ export const dispatch = async (
         return notification ? null : ok(id, handleListTools(config));
 
       case 'tools/call': {
-        const params = (request.params ?? {}) as { name?: string; arguments?: unknown };
-        if (!params.name) return err(id, Codes.InvalidParams, '`name` is required');
-        const result = await handleCallTool(config, ctx, {
-          name: params.name,
-          arguments: params.arguments,
-        });
+        const parsed = parseParams(CallToolRequestParamsSchema, request.params);
+        if (!parsed.ok) {
+          return notification
+            ? null
+            : err(id, Codes.InvalidParams, 'Invalid tools/call params', { issues: parsed.issues });
+        }
+        const { name, arguments: args } = parsed.data;
+        const result = await handleCallTool(config, ctx, { name, arguments: args });
         if (result === null) {
-          return err(id, Codes.NotFound, `Tool not found: ${params.name}`);
+          return err(id, Codes.NotFound, `Tool not found: ${name}`);
         }
         return notification ? null : ok(id, result);
       }
@@ -231,11 +253,17 @@ export const dispatch = async (
         return notification ? null : ok(id, handleListResourceTemplates(config));
 
       case 'resources/read': {
-        const params = (request.params ?? {}) as { uri?: string };
-        if (!params.uri) return err(id, Codes.InvalidParams, '`uri` is required');
-        const result = await handleReadResource(config, ctx, { uri: params.uri });
+        const parsed = parseParams(ReadResourceRequestParamsSchema, request.params);
+        if (!parsed.ok) {
+          return notification
+            ? null
+            : err(id, Codes.InvalidParams, 'Invalid resources/read params', {
+                issues: parsed.issues,
+              });
+        }
+        const result = await handleReadResource(config, ctx, { uri: parsed.data.uri });
         if (result === null) {
-          return err(id, Codes.NotFound, `Resource not found: ${params.uri}`);
+          return err(id, Codes.NotFound, `Resource not found: ${parsed.data.uri}`);
         }
         return notification ? null : ok(id, result);
       }
@@ -244,20 +272,28 @@ export const dispatch = async (
         return notification ? null : ok(id, handleListPrompts(config));
 
       case 'prompts/get': {
-        const params = (request.params ?? {}) as { name?: string; arguments?: unknown };
-        if (!params.name) return err(id, Codes.InvalidParams, '`name` is required');
+        const parsed = parseParams(GetPromptRequestParamsSchema, request.params);
+        if (!parsed.ok) {
+          return notification
+            ? null
+            : err(id, Codes.InvalidParams, 'Invalid prompts/get params', {
+                issues: parsed.issues,
+              });
+        }
         const result = await handleGetPrompt(config, ctx, {
-          name: params.name,
-          arguments: params.arguments,
+          name: parsed.data.name,
+          arguments: parsed.data.arguments,
         });
         if (result === null) {
-          return err(id, Codes.NotFound, `Prompt not found: ${params.name}`);
+          return err(id, Codes.NotFound, `Prompt not found: ${parsed.data.name}`);
         }
         return notification ? null : ok(id, result);
       }
 
       default:
-        return notification ? null : err(id, Codes.MethodNotFound, `Method not found: ${request.method}`);
+        return notification
+          ? null
+          : err(id, Codes.MethodNotFound, `Method not found: ${request.method}`);
     }
   } catch (e) {
     if (notification) return null;
