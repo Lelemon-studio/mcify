@@ -1,6 +1,6 @@
 {
   "name": "@mcify/cli",
-  "version": "0.0.1-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Command-line tool for mcify — init, dev, build, deploy, generate.",
   "license": "Apache-2.0",
   "type": "module",
@@ -15,7 +15,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "templates", "README.md", "LICENSE", "NOTICE"],
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "publishConfig": {
     "access": "public"
   },

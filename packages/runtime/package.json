@@ -1,6 +1,6 @@
 {
   "name": "@mcify/runtime",
-  "version": "0.0.1-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "MCP server runtime for mcify — Hono-based, multi-target (Node, Bun, Workers).",
   "license": "Apache-2.0",
   "type": "module",
@@ -24,7 +24,12 @@
       "import": "./dist/adapters/workers.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -59,7 +64,9 @@
     "@hono/node-server": "^1.13.0"
   },
   "peerDependenciesMeta": {
-    "@hono/node-server": { "optional": true }
+    "@hono/node-server": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@hono/node-server": "^1.13.0",
