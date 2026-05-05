@@ -1,0 +1,89 @@
+---
+// Inline SVG mockup of the inspector. Designed to evoke the real thing
+// without needing a screenshot during early-alpha. Replace with a real PNG
+// once captured (`<img src="/screenshots/inspector.png">`).
+---
+
+<div class="rounded-xl border border-ink-800 bg-ink-900/50 p-2 shadow-2xl shadow-black/40">
+  <svg
+    role="img"
+    aria-label="mcify inspector mockup showing tools and live calls"
+    viewBox="0 0 720 460"
+    class="h-auto w-full rounded-lg"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- background -->
+    <rect width="720" height="460" rx="6" fill="#0a0a0a" />
+
+    <!-- topbar -->
+    <rect x="0" y="0" width="720" height="44" fill="#141414" />
+    <line x1="0" y1="44" x2="720" y2="44" stroke="#262626" stroke-width="1" />
+    <rect x="20" y="14" width="14" height="14" rx="3" fill="#fde047" />
+    <text x="42" y="26" fill="#e5e5e5" font-family="ui-sans-serif, sans-serif" font-size="13" font-weight="600">mcify</text>
+    <text x="92" y="26" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="12">khipu@0.1.0</text>
+    <circle cx="660" cy="22" r="4" fill="#4ade80" />
+    <text x="672" y="26" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11">live</text>
+
+    <!-- tabs row -->
+    <line x1="0" y1="84" x2="720" y2="84" stroke="#262626" stroke-width="1" />
+    <text x="20" y="70" fill="#e5e5e5" font-family="ui-sans-serif, sans-serif" font-size="13" font-weight="500">Tools</text>
+    <rect x="14" y="80" width="38" height="2" fill="#fde047" />
+    <text x="80" y="70" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="13">Calls Log</text>
+    <text x="160" y="70" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="13">Playground</text>
+    <text x="248" y="70" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="13">Settings</text>
+
+    <!-- panel header -->
+    <text x="20" y="118" fill="#e5e5e5" font-family="ui-sans-serif, sans-serif" font-size="14" font-weight="600">Tools</text>
+    <text x="660" y="118" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="11" text-anchor="end">2 registered</text>
+
+    <!-- tool card 1 -->
+    <rect x="20" y="138" width="680" height="60" rx="8" fill="#141414" stroke="#262626" />
+    <text x="36" y="160" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="13" font-weight="600">khipu_create_payment</text>
+    <rect x="240" y="148" width="86" height="18" rx="3" fill="none" stroke="#262626" />
+    <text x="248" y="160" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="10">show schema</text>
+    <text x="36" y="180" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="12">Create a Khipu payment link. Returns a paymentUrl the customer opens to pay.</text>
+
+    <!-- tool card 2 -->
+    <rect x="20" y="208" width="680" height="60" rx="8" fill="#141414" stroke="#262626" />
+    <text x="36" y="230" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="13" font-weight="600">khipu_get_payment_status</text>
+    <rect x="266" y="218" width="86" height="18" rx="3" fill="none" stroke="#262626" />
+    <text x="274" y="230" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="10">show schema</text>
+    <text x="36" y="250" fill="#a3a3a3" font-family="ui-sans-serif, sans-serif" font-size="12">Look up a Khipu payment by id. Returns current status, amount, subject, and your transaction id.</text>
+
+    <!-- calls log preview -->
+    <line x1="20" y1="290" x2="700" y2="290" stroke="#262626" stroke-width="1" />
+    <text x="20" y="310" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1">RECENT CALLS</text>
+
+    <!-- call row -->
+    <text x="20" y="334" fill="#525252" font-family="ui-monospace, monospace" font-size="11">14:22:08.142</text>
+    <text x="100" y="334" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="11">khipu_create_payment</text>
+    <text x="270" y="334" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11">{'{"subject":"Order #1","currency":"CLP",…}'}</text>
+    <text x="600" y="334" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11" text-anchor="end">238</text>
+    <rect x="616" y="324" width="34" height="14" rx="3" fill="rgba(74,222,128,0.13)" />
+    <text x="633" y="334" fill="#4ade80" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600" text-anchor="middle">OK</text>
+
+    <text x="20" y="354" fill="#525252" font-family="ui-monospace, monospace" font-size="11">14:21:47.011</text>
+    <text x="100" y="354" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="11">khipu_get_payment_status</text>
+    <text x="270" y="354" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11">{'{"paymentId":"abc123"}'}</text>
+    <text x="600" y="354" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11" text-anchor="end">112</text>
+    <rect x="616" y="344" width="34" height="14" rx="3" fill="rgba(74,222,128,0.13)" />
+    <text x="633" y="354" fill="#4ade80" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600" text-anchor="middle">OK</text>
+
+    <text x="20" y="374" fill="#525252" font-family="ui-monospace, monospace" font-size="11">14:21:30.998</text>
+    <text x="100" y="374" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="11">khipu_create_payment</text>
+    <text x="270" y="374" fill="#f87171" font-family="ui-monospace, monospace" font-size="11">validation error (input): amount</text>
+    <text x="600" y="374" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11" text-anchor="end">3</text>
+    <rect x="616" y="364" width="34" height="14" rx="3" fill="rgba(248,113,113,0.13)" />
+    <text x="633" y="374" fill="#f87171" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600" text-anchor="middle">ERR</text>
+
+    <text x="20" y="394" fill="#525252" font-family="ui-monospace, monospace" font-size="11">14:20:55.332</text>
+    <text x="100" y="394" fill="#e5e5e5" font-family="ui-monospace, monospace" font-size="11">khipu_create_payment</text>
+    <text x="270" y="394" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11">{'{"subject":"Order #2","currency":"USD",…}'}</text>
+    <text x="600" y="394" fill="#a3a3a3" font-family="ui-monospace, monospace" font-size="11" text-anchor="end">214</text>
+    <rect x="616" y="384" width="34" height="14" rx="3" fill="rgba(74,222,128,0.13)" />
+    <text x="633" y="394" fill="#4ade80" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600" text-anchor="middle">OK</text>
+
+    <!-- footer hint -->
+    <text x="20" y="436" fill="#404040" font-family="ui-monospace, monospace" font-size="10">localhost:3001 — connected to khipu MCP server on :8888</text>
+  </svg>
+</div>

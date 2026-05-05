@@ -1,0 +1,46 @@
+---
+const features = [
+  {
+    title: 'Type-safe end-to-end',
+    body: 'One Zod schema becomes your handler types, JSON Schema for tools/list, and a generated client. No drift between server, client, and docs.',
+  },
+  {
+    title: 'Edge-first',
+    body: 'Same handler runs on Cloudflare Workers, Vercel Edge, Bun, Node, or Docker. The runtime ships adapters for each — no rewrites.',
+  },
+  {
+    title: 'AI-agent-aware',
+    body: '`mcify init` ships an AGENTS.md that Claude Code, Cursor, Cody and Copilot Workspace read automatically. Your agent already knows the conventions.',
+  },
+  {
+    title: 'Built-in inspector',
+    body: '`mcify dev` opens a local web inspector at :3001 — list of tools, live calls log, playground to invoke by hand. No extra setup.',
+  },
+  {
+    title: 'Composable middleware',
+    body: '`requireAuth`, `rateLimit`, `withTimeout` ship in core. Wrap any tool. Write your own; they compose like Express/Hono.',
+  },
+  {
+    title: 'Deploy in one command',
+    body: '`mcify deploy cloudflare`, `vercel`, or `docker`. Bundles, generates config, deploys. Pre-flight size checks for edge runtimes.',
+  },
+];
+---
+
+<section class="section border-t border-ink-800/80">
+  <div class="container-wide">
+    <div class="mb-12">
+      <h2 class="section-title">Why mcify</h2>
+      <p class="section-lead">Six things you'd build by hand the first week — already in the box.</p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {features.map((f) => (
+        <div class="card">
+          <h3 class="mb-2 text-base font-semibold tracking-tight">{f.title}</h3>
+          <p class="text-sm leading-relaxed text-ink-400" set:html={f.body.replaceAll(/`([^`]+)`/g, '<code class="rounded bg-ink-800/60 px-1 py-0.5 text-[12px] text-ink-200">$1</code>')}></p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

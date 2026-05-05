@@ -1,0 +1,161 @@
+# mcify
+
+> Open source platform that exposes any API as a Model Context Protocol (MCP) server. CLI-first, type-safe (Zod end-to-end), deployable to Cloudflare Workers, Vercel Edge, Bun, Node, or Docker. Built for developers using AI agents (Claude, Cursor, custom). Apache 2.0. Maintained by Lelemon Studio.
+
+## What it is
+
+mcify is to MCP servers what Hono is to HTTP servers: a small, opinionated framework that handles the protocol boilerplate so you only write your tools' business logic. Three packages on npm:
+
+- `@mcify/cli` — `mcify init|dev|build|generate|deploy` commands.
+- `@mcify/core` — `defineTool`, `defineResource`, `definePrompt`, `defineConfig`, schema helpers, auth helpers, middleware (`requireAuth`, `rateLimit`, `withTimeout`).
+- `@mcify/runtime` — MCP server runtime: stdio (for Claude Desktop / Cursor) and HTTP (Hono-based) transports, multi-target adapters (Node, Bun, Workers), event bus, optional Pino logger.
+
+Plus `@mcify/inspector` — a local web UI served by `mcify dev` at `:3001` with tools list, live calls log, playground.
+
+## Install
+
+```bash
+npx @mcify/cli@alpha init my-mcp
+cd my-mcp
+pnpm install
+```
+
+The scaffold ships an `AGENTS.md` that AI coding assistants (Claude Code, Cursor, Cody, Windsurf, Copilot Workspace) read automatically. It documents the canonical pattern for adding tools, schema helpers, auth conventions, testing approach, and project-specific anti-patterns.
+
+## Define a tool (canonical pattern)
+
+```ts
+import { defineTool, schema } from '@mcify/core';
+import { requireAuth, rateLimit, withTimeout } from '@mcify/core/middleware';
+import { z } from 'zod';
+
+export const createPayment = defineTool({
+  name: 'khipu_create_payment',
+  description: 'Create a Khipu payment link. Returns a URL the customer opens to pay.',
+  middlewares: [
+    requireAuth(),
+    rateLimit({ max: 60, windowMs: 60_000 }),
+    withTimeout({ ms: 5_000 }),
+  ],
+  input: z.object({
+    subject: z.string().min(1).max(255),
+    currency: z.enum(['CLP', 'USD']),
+    amount: z.number().positive(),
+  }),
+  output: z.object({
+    paymentId: z.string(),
+    paymentUrl: schema.httpUrl(),
+  }),
+  handler: async (input, ctx) => {
+    // Use ctx.fetch (NOT global fetch) so tests can swap it.
+    const res = await ctx.fetch('https://payment-api.khipu.com/v3/payments', {
+      method: 'POST',
+      headers: { 'x-api-key': process.env.KHIPU_API_KEY },
+      body: JSON.stringify(input),
+    });
+    return res.json();
+  },
+});
+```
+
+## Wire tools to a config
+
+```ts
+// mcify.config.ts
+import { bearer, defineConfig } from '@mcify/core';
+import { createPayment } from './tools/create-payment.js';
+
+export default defineConfig({
+  name: 'khipu',
+  version: '0.1.0',
+  auth: bearer({ env: 'MCIFY_AUTH_TOKEN' }),  // Bearer token AGENTS present to *this* server.
+  tools: [createPayment],
+});
+```
+
+## Run locally with the inspector
+
+```bash
+export KHIPU_API_KEY='sandbox-key'
+export MCIFY_AUTH_TOKEN="$(openssl rand -hex 32)"
+pnpm dev
+# → MCP at http://localhost:8888/mcp
+# → Inspector at http://localhost:3001
+```
+
+The inspector has tabs: **Tools** (schemas), **Calls Log** (live event stream), **Playground** (invoke by hand), **Settings**. Hot reload re-emits the config when you save.
+
+## Test without the network
+
+```ts
+import { createTestClient } from '@mcify/runtime/test';
+import { vi } from 'vitest';
+import config from './mcify.config.js';
+
+const client = createTestClient(config, {
+  auth: { type: 'bearer', token: 'test' },
+  fetch: vi.fn().mockResolvedValue(new Response('{...}')),
+});
+
+const result = await client.invokeTool('khipu_create_payment', { subject: 's', currency: 'CLP', amount: 100 });
+```
+
+Calls go through the same dispatch path production HTTP traffic uses; no protocol mocks.
+
+## Deploy
+
+```bash
+mcify deploy cloudflare              # Cloudflare Workers, via wrangler
+mcify deploy vercel --prod           # Vercel Edge Functions, via vercel CLI
+mcify deploy docker --tag :latest    # Multi-stage Dockerfile + docker build
+```
+
+All three accept `--config <path>` and `--dry-run`. Pre-flight bundle size checks for edge runtimes (1 MB Workers free, 4 MB Vercel Edge, 10 MB Workers paid).
+
+## Architecture invariants
+
+For AI agents working in mcify projects:
+
+- **Workers / edge compatibility:** `@mcify/core` and `@mcify/runtime/dispatch` MUST run on Cloudflare Workers, Bun, and Node alike. No Node-only APIs in those modules. Pino logger is opt-in (uses `node:fs` internals).
+- **Security:** All MCP tool inputs are validated with Zod at the boundary. Token comparison uses `constantTimeEqual` (XOR fold, not `===`). Logs must not include credentials or PII.
+- **stdio vs HTTP:** stdio MCP transport logs to stderr only — stdout is the protocol channel. HTTP returns 202 on notifications, 405 on `GET /mcp` (SSE streaming planned).
+
+## Auth options
+
+- `bearer({ env: 'TOKEN_VAR' })` — `Authorization: Bearer <token>`. Token compared via constant-time check against the env var (or a custom `verify` callback).
+- `apiKey({ headerName: 'X-Api-Key', env: 'KEY_VAR' })` — same pattern, custom header.
+- `oauth({ provider, scopes, authorizationUrl, tokenUrl })` — shape declared, full handshake in V2.
+- `auth.none()` — public server (rare).
+
+## Schema helpers
+
+`schema.id(max?)`, `schema.url()`, `schema.httpUrl()`, `schema.timestamp()`, `schema.money()`, `schema.paginated(item)`. Use these instead of rolling your own — they handle edge cases consistently across the codebase.
+
+## Anti-patterns to avoid
+
+- ❌ `console.log` in committed code → use `ctx.logger.info('msg', { meta })`.
+- ❌ Raw `fetch(...)` in handlers → use `ctx.fetch` so tests can swap it.
+- ❌ Manual `if (typeof x !== ...)` validation → Zod `input:` schema validates at the boundary.
+- ❌ Wrapping handlers in `try/catch` to log errors → just `throw`; the runtime emits `tool:called` events with error attached.
+- ❌ Reading secrets at module load time in `mcify.config.ts` → read inside the handler or pass via the client constructor.
+- ❌ Per-tool retry/cache logic → use a middleware so it composes cleanly.
+- ❌ `console.log(amount)` at info level for payment data → debug level only, treat anything tied to a transaction as PII-adjacent.
+
+## Reference connectors
+
+- `@mcify/example-khipu` — Chilean payment links. Two tools (`khipu_create_payment`, `khipu_get_payment_status`) wrapped in `requireAuth` + `rateLimit` + `withTimeout`. Source at https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu — clone with `mcify init --template example-khipu`.
+
+## Resources
+
+- Repo: https://github.com/Lelemon-studio/mcify
+- npm scope: https://www.npmjs.com/org/mcify
+- AGENTS.md (full conventions): https://github.com/Lelemon-studio/mcify/blob/main/AGENTS.md
+- ADRs (decision log): https://github.com/Lelemon-studio/mcify/tree/main/docs/decisions
+- Anthropic MCP spec: https://modelcontextprotocol.io
+- Issues: https://github.com/Lelemon-studio/mcify/issues
+
+## Status
+
+Public alpha. Core, runtime, CLI, inspector all working end-to-end. Phase B (inspector) and Phase C (Khipu connector) shipped. Phase D (deploy commands for Cloudflare / Vercel / Docker) shipped. Next: more connectors (Bsale, Fintoc), Fly.io and Railway adapters, hosted cloud (Phase E, V2).
+
+Use the `@alpha` npm tag for now; `latest` carries placeholder releases until V1 cuts.

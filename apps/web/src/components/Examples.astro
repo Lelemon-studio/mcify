@@ -1,0 +1,60 @@
+---
+const examples = [
+  {
+    name: 'Khipu',
+    summary: 'Chilean payment links — sandbox-ready reference connector with two tools and a Zod-validated client.',
+    href: 'https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu',
+    template: 'mcify init my-server --template example-khipu',
+    status: 'available',
+  },
+  {
+    name: 'Bsale',
+    summary: 'Chilean DTE / billing — emit invoices, list documents, look up clients.',
+    href: '#',
+    template: '',
+    status: 'planned',
+  },
+  {
+    name: 'Fintoc',
+    summary: 'Banking aggregation across Chile and Mexico — list accounts, list movements, balances.',
+    href: '#',
+    template: '',
+    status: 'planned',
+  },
+];
+---
+
+<section class="section border-t border-ink-800/80">
+  <div class="container-wide">
+    <div class="mb-12">
+      <h2 class="section-title">Reference connectors</h2>
+      <p class="section-lead">Real APIs wired to mcify, shipped as both runnable examples and clonable templates. Used by Lelemon Agentes in production.</p>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      {examples.map((e) => (
+        <div class="card flex flex-col">
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="text-base font-semibold tracking-tight">{e.name}</h3>
+            {e.status === 'available' ? (
+              <span class="rounded bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">live</span>
+            ) : (
+              <span class="rounded border border-ink-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-500">planned</span>
+            )}
+          </div>
+          <p class="mb-4 flex-1 text-sm leading-relaxed text-ink-400">{e.summary}</p>
+          {e.status === 'available' ? (
+            <>
+              <code class="mb-3 block overflow-x-auto rounded-md bg-ink-950 p-2 font-mono text-[11.5px] text-ink-200">{e.template}</code>
+              <a class="text-xs text-accent hover:underline" href={e.href} rel="noreferrer noopener" target="_blank">
+                Source on GitHub →
+              </a>
+            </>
+          ) : (
+            <span class="text-xs text-ink-500">Coming soon</span>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

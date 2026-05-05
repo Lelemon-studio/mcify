@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply bg-ink-950 text-ink-100 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    @apply bg-accent text-ink-950;
+  }
+
+  /* Subtle grid background, only at the top of the page */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center top;
+    mask-image: radial-gradient(ellipse 80% 60% at center top, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at center top, black 30%, transparent 80%);
+  }
+}
+
+@layer components {
+  .container-narrow {
+    @apply mx-auto w-full max-w-5xl px-6;
+  }
+
+  .container-wide {
+    @apply mx-auto w-full max-w-6xl px-6;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-ink-950 hover:bg-accent-dim;
+  }
+
+  .btn-secondary {
+    @apply btn border border-ink-700 bg-ink-900 text-ink-100 hover:border-ink-600 hover:bg-ink-800;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/50 px-3 py-1 text-xs text-ink-300;
+  }
+
+  .section {
+    @apply py-20 md:py-28;
+  }
+
+  .section-title {
+    @apply mb-3 text-3xl font-semibold tracking-tight2 md:text-4xl;
+  }
+
+  .section-lead {
+    @apply max-w-2xl text-base text-ink-400 md:text-lg;
+  }
+
+  .card {
+    @apply rounded-xl border border-ink-800 bg-ink-900/50 p-6;
+  }
+}

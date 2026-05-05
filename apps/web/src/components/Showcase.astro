@@ -1,0 +1,56 @@
+---
+import { Code } from 'astro:components';
+import InspectorMockup from './InspectorMockup.astro';
+
+const sample = `import { defineTool, schema } from '@mcify/core';
+import { requireAuth, rateLimit } from '@mcify/core/middleware';
+import { z } from 'zod';
+
+export const createPayment = defineTool({
+  name: 'khipu_create_payment',
+  description: 'Create a Khipu payment link',
+  middlewares: [requireAuth(), rateLimit({ max: 60, windowMs: 60_000 })],
+  input: z.object({
+    subject: z.string().min(1).max(255),
+    currency: z.enum(['CLP', 'USD']),
+    amount: z.number().positive(),
+  }),
+  output: z.object({
+    paymentId: z.string(),
+    paymentUrl: schema.httpUrl(),
+  }),
+  handler: async (input, ctx) => {
+    return ctx.fetch('https://payment-api.khipu.com/v3/payments', {
+      method: 'POST',
+      headers: { 'x-api-key': process.env.KHIPU_API_KEY },
+      body: JSON.stringify(input),
+    }).then((r) => r.json());
+  },
+});`;
+---
+
+<section class="section border-t border-ink-800/80">
+  <div class="container-wide">
+    <div class="mb-10">
+      <h2 class="section-title">Define a tool. See it live.</h2>
+      <p class="section-lead">
+        Schemas double as runtime validation, MCP <code class="rounded bg-ink-800/60 px-1 text-[14px]">tools/list</code> contracts,
+        and TypeScript types. The inspector reflects them in real time as you save.
+      </p>
+    </div>
+
+    <div class="grid items-stretch gap-6 lg:grid-cols-2">
+      <div class="overflow-hidden rounded-xl border border-ink-800 bg-ink-900/70">
+        <div class="flex items-center justify-between border-b border-ink-800 px-4 py-2">
+          <span class="font-mono text-xs text-ink-400">tools/create-payment.ts</span>
+          <span class="font-mono text-[10px] uppercase tracking-wider text-ink-500">typescript</span>
+        </div>
+        <div class="overflow-x-auto p-4 text-[12.5px] leading-relaxed">
+          <Code code={sample} lang="ts" theme="github-dark-default" wrap />
+        </div>
+      </div>
+
+      <InspectorMockup />
+    </div>
+  </div>
+</section>

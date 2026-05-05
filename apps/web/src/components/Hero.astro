@@ -1,0 +1,79 @@
+---
+import { Code } from 'astro:components';
+
+const installSnippet = `npx @mcify/cli@alpha init my-mcp`;
+---
+
+<section class="relative overflow-hidden">
+  <div class="bg-grid pointer-events-none absolute inset-0"></div>
+
+  <div class="container-narrow relative pt-20 pb-16 md:pt-32 md:pb-24">
+    <div class="flex flex-col items-start gap-5 md:items-center md:text-center">
+      <div class="pill">
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span>
+        Public alpha · v1.0.0-alpha.2
+      </div>
+
+      <h1 class="text-4xl font-semibold tracking-tight3 md:text-6xl">
+        AI-ready your software<br />
+        <span class="text-ink-400">in minutes.</span>
+      </h1>
+
+      <p class="max-w-2xl text-base text-ink-300 md:text-lg">
+        Open source platform to expose any API as a Model Context Protocol (MCP) server.
+        CLI-first, type-safe, edge-deployable. Your handler stays a one-liner — auth,
+        rate limits, schema validation and deploy live in the framework.
+      </p>
+
+      <div class="mt-2 flex flex-col items-start gap-3 md:flex-row md:items-center">
+        <a class="btn-primary" href="#quick-start">Get started</a>
+        <a
+          class="btn-secondary"
+          href="https://github.com/Lelemon-studio/mcify"
+          rel="noreferrer noopener"
+          target="_blank"
+        >
+          Star on GitHub
+        </a>
+      </div>
+
+      <div class="mt-6 w-full max-w-xl">
+        <div
+          class="flex items-center justify-between rounded-lg border border-ink-800 bg-ink-900/70 px-4 py-3 font-mono text-sm"
+        >
+          <code class="text-ink-100"><span class="text-ink-400">$</span> {installSnippet}</code>
+          <button
+            type="button"
+            class="rounded border border-ink-700 px-2 py-0.5 text-[11px] uppercase tracking-wider text-ink-400 transition-colors hover:bg-ink-800 hover:text-ink-100"
+            data-clipboard={installSnippet}
+            id="copy-install"
+            aria-label="Copy install command"
+          >
+            copy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const button = document.getElementById('copy-install');
+  if (button) {
+    button.addEventListener('click', async () => {
+      const text = button.getAttribute('data-clipboard') ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = button.textContent ?? 'copy';
+        button.textContent = 'copied';
+        setTimeout(() => {
+          button.textContent = original;
+        }, 1200);
+      } catch {
+        // Clipboard blocked (insecure context, permissions). Surface visibly
+        // so the user knows the click registered.
+        button.textContent = 'select & copy manually';
+      }
+    });
+  }
+</script>

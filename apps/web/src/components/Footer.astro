@@ -1,0 +1,25 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-ink-800/80 py-10">
+  <div class="container-wide flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+    <div class="flex items-center gap-3">
+      <span class="inline-block h-5 w-5 rounded bg-accent"></span>
+      <div class="text-sm">
+        <div class="font-semibold tracking-tight">mcify</div>
+        <div class="text-ink-500">Apache 2.0 · maintained by <a class="hover:text-ink-300" href="https://lelemon.cl" rel="noreferrer noopener" target="_blank">Lelemon Studio</a></div>
+      </div>
+    </div>
+
+    <nav class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-400">
+      <a class="hover:text-ink-100" href="https://github.com/Lelemon-studio/mcify" rel="noreferrer noopener" target="_blank">GitHub</a>
+      <a class="hover:text-ink-100" href="https://www.npmjs.com/org/mcify" rel="noreferrer noopener" target="_blank">npm</a>
+      <a class="hover:text-ink-100" href="/llms.txt">llms.txt</a>
+      <a class="hover:text-ink-100" href="https://github.com/Lelemon-studio/mcify/blob/main/AGENTS.md" rel="noreferrer noopener" target="_blank">AGENTS.md</a>
+      <a class="hover:text-ink-100" href="https://github.com/Lelemon-studio/mcify/issues" rel="noreferrer noopener" target="_blank">Issues</a>
+    </nav>
+  </div>
+
+  <div class="container-wide mt-6 text-xs text-ink-600">© {year} Lelemon Studio. mcify is open source software.</div>
+</footer>
