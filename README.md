@@ -58,6 +58,8 @@ Open `http://localhost:3001` for the inspector. Connect your MCP client (Claude 
 
 Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and guidelines. By participating, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
+If you (or your AI assistant) want a fast read on conventions and architecture, start with **[AGENTS.md](./AGENTS.md)** — invariants, anti-patterns we've already hit, and the commands that matter. Significant decisions are logged as [ADRs](./docs/decisions/).
+
 ## Security
 
 To report a vulnerability, please follow the process in [SECURITY.md](./SECURITY.md). Do not open public issues for security concerns.

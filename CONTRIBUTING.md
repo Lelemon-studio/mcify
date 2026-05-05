@@ -2,6 +2,8 @@
 
 Thanks for your interest in mcify. This document covers how to set up the project, the conventions we follow, and how to submit changes.
 
+> **Working with an AI assistant?** Read **[AGENTS.md](./AGENTS.md)** first. It's the single source of truth for invariants, anti-patterns, and conventions — written so any AI agent (Claude Code, Cursor, Cody, Windsurf, Copilot) gets the same picture.
+
 ## Code of conduct
 
 By participating in this project, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md). Please read it before contributing.
@@ -125,7 +127,17 @@ If your change adds a public API, update the relevant guide and the API referenc
 
 ## Releasing
 
-Releases are managed by maintainers using Changesets. See [`docs/releasing.md`](./apps/docs/src/content/docs/releasing.md) (coming soon).
+We use [Changesets](https://github.com/changesets/changesets). After a user-facing change:
+
+```bash
+pnpm changeset
+```
+
+The CLI asks which packages bumped and at which level (patch/minor/major), then writes a `.changeset/<slug>.md`. Commit it with your code.
+
+When the PR merges to `main`, the Release workflow opens (or updates) a `chore(release): version packages` PR. Merging *that* PR publishes to npm.
+
+See [`.changeset/README.md`](./.changeset/README.md) for the full flow.
 
 ## Reporting bugs
 
