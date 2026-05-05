@@ -1,6 +1,6 @@
 {
   "name": "@mcify/core",
-  "version": "0.0.1-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Builder library for mcify MCP servers — schema, server, auth helpers, logger.",
   "license": "Apache-2.0",
   "type": "module",
@@ -12,7 +12,12 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "publishConfig": {
     "access": "public"
   },
