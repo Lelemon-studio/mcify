@@ -19,15 +19,34 @@ export default defineConfig({
       lastUpdated: true,
       favicon: '/favicon.svg',
       head: [
+        // Theme color matches the brand accent so mobile chrome picks it up.
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#0a0a0a' } },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/favicon.svg' } },
+
+        // Open Graph — these are page-defaults; Starlight's per-page frontmatter
+        // overrides title/description automatically.
+        { tag: 'meta', attrs: { property: 'og:type', content: 'website' } },
+        { tag: 'meta', attrs: { property: 'og:site_name', content: 'mcify docs' } },
+        { tag: 'meta', attrs: { property: 'og:locale', content: 'en_US' } },
+        { tag: 'meta', attrs: { property: 'og:image', content: 'https://docs.mcify.dev/og.png' } },
+        { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+        { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+        { tag: 'meta', attrs: { property: 'og:image:type', content: 'image/png' } },
+        { tag: 'meta', attrs: { property: 'og:image:alt', content: 'mcify docs' } },
+
+        // Twitter
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
         {
           tag: 'meta',
-          attrs: { name: 'theme-color', content: '#fde047' },
+          attrs: { name: 'twitter:image', content: 'https://docs.mcify.dev/og.png' },
         },
-        // Discoverability for AI agents — every page is also available as
-        // raw markdown by appending `.md` (handled by starlight-llms-txt).
+
+        // Discoverability for AI agents — every page is also available as raw
+        // markdown by appending `.md` (handled by starlight-llms-txt). The full
+        // bundle lives at /llms-full.txt.
         {
           tag: 'link',
-          attrs: { rel: 'alternate', type: 'text/markdown', href: '/llms.txt' },
+          attrs: { rel: 'alternate', type: 'text/markdown', href: '/llms-full.txt' },
         },
       ],
       customCss: ['./src/styles/custom.css'],

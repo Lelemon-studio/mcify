@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#262626" stroke-width="0.5" />
+    </pattern>
+    <linearGradient id="fade" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a0a" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#0a0a0a" stop-opacity="1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0a0a0a" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <rect width="1200" height="630" fill="url(#fade)" />
+
+  <!-- Logo mark (the {m} monogram), placed top-left at 84×84. -->
+  <g transform="translate(80, 80) scale(2.6)">
+    <g fill="none" stroke="#fde047" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 8 Q6 8 6 11 L6 14 Q6 16 4 16 Q6 16 6 18 L6 21 Q6 24 9 24" />
+      <path d="M12 24 L12 16 Q12 13 14.5 13 Q17 13 17 16 L17 24 M17 16 Q17 13 19.5 13 Q22 13 22 16 L22 24" />
+      <path d="M23 8 Q26 8 26 11 L26 14 Q26 16 28 16 Q26 16 26 18 L26 21 Q26 24 23 24" />
+    </g>
+  </g>
+
+  <!-- Wordmark + tagline. system-ui falls back to whatever the renderer host has;
+       resvg ends up with DejaVu Sans on Linux runners, Segoe UI on Windows.
+       The shapes are large enough that the difference is invisible at preview size. -->
+  <text x="80" y="380" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="120" font-weight="800" fill="#fafafa" letter-spacing="-4">
+    mcify
+  </text>
+
+  <text x="80" y="450" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="38" font-weight="500" fill="#a3a3a3" letter-spacing="-0.5">
+    Turn any API into an MCP server.
+  </text>
+
+  <text x="80" y="500" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+        font-size="22" font-weight="500" fill="#737373">
+    TypeScript framework. Type-safe. Edge-deployable.
+  </text>
+
+  <!-- URL footer right -->
+  <text x="1120" y="570" text-anchor="end"
+        font-family="ui-monospace, SF Mono, Menlo, Consolas, monospace"
+        font-size="22" font-weight="600" fill="#fde047">
+    mcify.dev
+  </text>
+
+  <!-- Accent bar bottom-left -->
+  <rect x="80" y="540" width="120" height="3" rx="1.5" fill="#fde047" />
+</svg>

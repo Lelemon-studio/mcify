@@ -5,19 +5,61 @@ interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  /** When true, search engines won't index this page. */
+  noindex?: boolean;
 }
 
 const {
-  title = 'mcify — AI-ready your software in minutes',
-  description = 'Open source platform to expose any API as an MCP server. CLI-first, type-safe, edge-deployable.',
+  title = 'mcify — Turn any API into an MCP server',
+  description = 'Open-source TypeScript framework for building Model Context Protocol servers. Type-safe end-to-end with Zod, edge-deployable to Cloudflare Workers / Vercel / Fly / Railway / Docker, AI-agent-ready.',
   ogImage = '/og.png',
+  noindex = false,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://mcify.dev').href;
+const site = Astro.site ?? new URL('https://mcify.dev');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImageAbsolute = new URL(ogImage, site).href;
+
+// Schema.org JSON-LD — describes mcify as a software product so Google /
+// search engines can render rich results. The Organization sits next to it
+// so author/maintainer attribution is consistent.
+const schemaOrg = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${site.origin}/#software`,
+      name: 'mcify',
+      description,
+      url: site.origin,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Cross-platform',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      license: 'https://www.apache.org/licenses/LICENSE-2.0',
+      codeRepository: 'https://github.com/Lelemon-studio/mcify',
+      author: { '@id': `${site.origin}/#org` },
+      programmingLanguage: 'TypeScript',
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${site.origin}/#org`,
+      name: 'Lelemon Studio',
+      url: 'https://lelemon.cl',
+      email: 'contacto@lelemon.cl',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${site.origin}/#website`,
+      url: site.origin,
+      name: 'mcify',
+      description,
+      publisher: { '@id': `${site.origin}/#org` },
+      inLanguage: 'en',
+    },
+  ],
+};
 
 // Cloudflare Web Analytics — privacy-friendly page-view tracking, no cookies.
-// Set the Pages env var `PUBLIC_CF_WEB_ANALYTICS_TOKEN` once you generate a
-// site token in the Cloudflare dashboard (Analytics & Logs → Web Analytics).
 const webAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? '';
 ---
 
@@ -26,31 +68,61 @@ const webAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? '';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#0a0a0a" />
 
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <meta
+          name="robots"
+          content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+        />
+      )
+    }
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="theme-color" content="#0a0a0a" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="mcify" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL(ogImage, Astro.site ?? 'https://mcify.dev').href} />
+    <meta property="og:image" content={ogImageAbsolute} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="mcify — Turn any API into an MCP server" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL(ogImage, Astro.site ?? 'https://mcify.dev').href} />
+    <meta name="twitter:image" content={ogImageAbsolute} />
+    <meta name="twitter:image:alt" content="mcify — Turn any API into an MCP server" />
 
-    <!-- Hint for AI assistants -->
-    <link rel="alternate" type="text/markdown" title="LLM-friendly summary" href="/llms.txt" />
+    <!-- Discovery for AI agents — every page is also available as raw markdown
+         on docs.mcify.dev; this hint points crawlers at the consolidated bundle. -->
+    <link
+      rel="alternate"
+      type="text/markdown"
+      title="LLM-friendly summary"
+      href="https://docs.mcify.dev/llms-full.txt"
+    />
 
-    <link rel="preconnect" href="https://rsms.me/" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://rsms.me/" crossorigin />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />
 
     {
       webAnalyticsToken && (
