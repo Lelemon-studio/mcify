@@ -3,6 +3,8 @@ title: Install
 description: One-line install via npx, no global needed.
 ---
 
+> **In a hurry?** Paste the [Bootstrap from zero](/prompts/bootstrap/) prompt into Claude Code / Cursor / Windsurf and the assistant runs every step below for you, plus adds your first tool, plus starts the dev server. Skip the terminal entirely.
+
 mcify ships as three npm packages on the `alpha` dist-tag. The CLI is the only thing you invoke directly:
 
 ```bash

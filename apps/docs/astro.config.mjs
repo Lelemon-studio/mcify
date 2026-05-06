@@ -85,6 +85,7 @@ export default defineConfig({
           collapsed: false,
           items: [
             { label: 'How to use these', slug: 'prompts/how-to-use' },
+            { label: 'Bootstrap from zero', slug: 'prompts/bootstrap' },
             { label: 'Add a tool to my server', slug: 'prompts/add-tool' },
             { label: 'Wrap an API as MCP', slug: 'prompts/wrap-api' },
             { label: 'Debug a misbehaving tool', slug: 'prompts/debug-tool' },

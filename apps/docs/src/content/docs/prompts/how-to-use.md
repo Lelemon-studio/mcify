@@ -35,12 +35,13 @@ mcify ships three things specifically for this loop:
 
 ## Available prompts
 
-| Prompt                                               | What it does                                                                                                              |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| [Add a tool](/prompts/add-tool/)                     | Tell the assistant what API call you want to expose. It scaffolds the tool with the right schemas, middleware, and tests. |
-| [Wrap an existing API](/prompts/wrap-api/)           | Point at an OpenAPI spec or a few endpoints. The assistant generates a full mcify connector.                              |
-| [Debug a misbehaving tool](/prompts/debug-tool/)     | Paste the error or the agent transcript. The assistant locates the bug (schema mismatch, auth, timeout, side effect).     |
-| [Migrate to multi-spec](/prompts/migrate-multispec/) | You already have one MCP server. The assistant adds N microservices behind it via `generate from-openapi`.                |
+| Prompt                                               | What it does                                                                                                                                             |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Bootstrap from zero](/prompts/bootstrap/)           | One prompt that runs `mcify init`, installs deps, sets up auth, adds your first tool, runs a test, and starts the dev server. You never open a terminal. |
+| [Add a tool](/prompts/add-tool/)                     | You already have a project. Tell the assistant what API call to expose. It scaffolds the tool with the right schemas, middleware, and tests.             |
+| [Wrap an existing API](/prompts/wrap-api/)           | Point at an OpenAPI spec or a few endpoints. The assistant generates a full mcify connector with multiple tools, client, tests, README.                  |
+| [Debug a misbehaving tool](/prompts/debug-tool/)     | Paste the error or the agent transcript. The assistant locates the bug (schema mismatch, auth, timeout, side effect).                                    |
+| [Migrate to multi-spec](/prompts/migrate-multispec/) | You already have one MCP server. The assistant adds N microservices behind it via `generate from-openapi`.                                               |
 
 ## Building your own
 
