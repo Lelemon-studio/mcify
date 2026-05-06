@@ -75,6 +75,30 @@ describe('init', () => {
     expect(dir).toBe(path.join(tmpDir, 'custom-name'));
   });
 
+  it('scaffolds the from-zod template with shared schemas + tools that import them', async () => {
+    const { dir } = await init({
+      name: 'my-zod-mcp',
+      template: 'from-zod',
+      templatesRoot: getTemplatesRoot(),
+    });
+
+    const schemas = await fs.readFile(path.join(dir, 'src/schemas.ts'), 'utf-8');
+    expect(schemas).toContain('export const User');
+    expect(schemas).toContain('export const CreateUserInput');
+
+    const createTool = await fs.readFile(path.join(dir, 'src/tools/create-user.ts'), 'utf-8');
+    expect(createTool).toContain("from '../schemas.js'");
+    expect(createTool).toContain("name: 'create_user'");
+
+    const config = await fs.readFile(path.join(dir, 'mcify.config.ts'), 'utf-8');
+    expect(config).toContain("name: 'my-zod-mcp'");
+    expect(config).toContain('createUser');
+    expect(config).toContain('getUser');
+
+    const agents = await fs.readFile(path.join(dir, 'AGENTS.md'), 'utf-8');
+    expect(agents).toContain('AI agent instructions for my-zod-mcp');
+  });
+
   it('scaffolds the example-khipu template with the project name in package.json', async () => {
     const { dir } = await init({
       name: 'mi-khipu',

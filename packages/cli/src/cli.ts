@@ -43,6 +43,11 @@ Commands:
                              --config <path>       Default: ./mcify.config.ts
                              --out <path>          Default: ./mcify-client.ts
 
+  generate from-openapi    Generate Zod-typed tools from one or more OpenAPI 3.x specs
+                             <spec>                URL or path (single-spec form)
+                             --spec <pfx>=<src>    Repeatable for multi-microservice setups
+                             --out <dir>           Default: ./src/generated
+
   --version, -v            Print mcify version
   --help, -h               Show this help
 

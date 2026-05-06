@@ -3,16 +3,31 @@ import path from 'node:path';
 import { loadConfig } from '../config-loader.js';
 import { getString, type ParsedArgs } from '../args.js';
 import { log } from '../logger.js';
+import { runGenerateFromOpenApi } from './generate-from-openapi.js';
 
 /**
- * `mcify generate` will eventually emit a fully-typed client SDK from the
- * server's Zod schemas (Zod → TS types). For V1 we ship a minimal stub that
- * lists the tools so consumers can at least import a `McifyTool` union.
+ * `mcify generate` dispatches to subcommands:
  *
- * Full implementation tracked at https://github.com/Lelemon-studio/mcify/issues
- * (label: generate-sdk).
+ *   - bare       → emit an SDK stub from the local `mcify.config.ts`
+ *   - from-openapi <spec> [--spec name=url]... → generate Zod-typed tools
+ *
+ * The bare form will eventually emit a fully-typed client SDK from the
+ * server's Zod schemas. For V1 it ships a minimal stub that lists the tools
+ * so consumers can at least import a `McifyTool` union.
  */
 export const runGenerate = async (args: ParsedArgs): Promise<void> => {
+  const subcommand = args.positional[1];
+  if (subcommand === 'from-openapi') {
+    await runGenerateFromOpenApi(args);
+    return;
+  }
+  if (subcommand && subcommand !== '') {
+    log.error(`Unknown generate subcommand: "${subcommand}"`);
+    log.hint('Available: from-openapi');
+    log.hint('Or run `mcify generate` with no subcommand to emit an SDK stub.');
+    process.exit(1);
+  }
+
   const configFlag = getString(args, 'config');
   const configPath = path.resolve(process.cwd(), configFlag ?? 'mcify.config.ts');
   const outFlag = getString(args, 'out');
@@ -30,8 +45,7 @@ export const runGenerate = async (args: ParsedArgs): Promise<void> => {
   const resources = config.resources ?? [];
   const prompts = config.prompts ?? [];
 
-  const toolNamesUnion =
-    tools.length === 0 ? 'never' : tools.map((t) => `'${t.name}'`).join(' | ');
+  const toolNamesUnion = tools.length === 0 ? 'never' : tools.map((t) => `'${t.name}'`).join(' | ');
   const resourceUrisUnion =
     resources.length === 0 ? 'never' : resources.map((r) => `'${r.uri}'`).join(' | ');
   const promptNamesUnion =
@@ -63,7 +77,5 @@ export const runGenerate = async (args: ParsedArgs): Promise<void> => {
   await fs.writeFile(outPath, lines.join('\n'), 'utf-8');
   const rel = path.relative(process.cwd(), outPath) || outPath;
   log.success(`wrote ${rel}`);
-  log.hint(
-    `${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`,
-  );
+  log.hint(`${tools.length} tools, ${resources.length} resources, ${prompts.length} prompts`);
 };

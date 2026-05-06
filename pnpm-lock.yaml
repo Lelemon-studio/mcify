@@ -97,6 +97,9 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.21.0
+      yaml:
+        specifier: ^2.6.1
+        version: 2.8.4
     devDependencies:
       '@mcify/inspector':
         specifier: workspace:*

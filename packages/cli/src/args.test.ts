@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseArgs } from './args.js';
+import { parseArgs, getString, getStrings } from './args.js';
 
 describe('parseArgs', () => {
   it('handles bare positional args', () => {
@@ -56,5 +56,26 @@ describe('parseArgs', () => {
       positional: ['init', 'my-mcp'],
       flags: { port: '3000', template: 'from-scratch' },
     });
+  });
+
+  it('accumulates repeated string flags into an array', () => {
+    const parsed = parseArgs([
+      'generate',
+      'from-openapi',
+      '--spec',
+      'users=https://a',
+      '--spec',
+      'billing=https://b',
+    ]);
+    expect(parsed.flags['spec']).toEqual(['users=https://a', 'billing=https://b']);
+    expect(getStrings(parsed, 'spec')).toEqual(['users=https://a', 'billing=https://b']);
+    // Backward compat: getString still works (returns the last value).
+    expect(getString(parsed, 'spec')).toBe('billing=https://b');
+  });
+
+  it('getStrings returns a single-element array for one-shot flags', () => {
+    const parsed = parseArgs(['init', 'foo', '--template', 'from-scratch']);
+    expect(getStrings(parsed, 'template')).toEqual(['from-scratch']);
+    expect(getStrings(parsed, 'missing')).toEqual([]);
   });
 });

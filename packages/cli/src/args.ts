@@ -1,6 +1,11 @@
 export interface ParsedArgs {
   positional: string[];
-  flags: Record<string, string | boolean>;
+  /**
+   * A flag's value is `string | boolean` for one-shot flags. When the same
+   * flag is passed multiple times (`--spec a --spec b`), the accumulated
+   * values land here as `string[]` — read them with {@link getStrings}.
+   */
+  flags: Record<string, string | boolean | string[]>;
 }
 
 /**
@@ -14,7 +19,22 @@ export interface ParsedArgs {
  */
 export const parseArgs = (argv: readonly string[]): ParsedArgs => {
   const positional: string[] = [];
-  const flags: Record<string, string | boolean> = {};
+  const flags: Record<string, string | boolean | string[]> = {};
+
+  // Accumulate `--name value` when the same name shows up more than once.
+  // The first repeat promotes the value to an array; subsequent repeats
+  // append. Booleans don't accumulate — passing `--flag` twice is the same
+  // as passing it once.
+  const setStringFlag = (name: string, value: string): void => {
+    const current = flags[name];
+    if (typeof current === 'string') {
+      flags[name] = [current, value];
+    } else if (Array.isArray(current)) {
+      current.push(value);
+    } else {
+      flags[name] = value;
+    }
+  };
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -32,7 +52,7 @@ export const parseArgs = (argv: readonly string[]): ParsedArgs => {
       const body = arg.slice(2);
       const eq = body.indexOf('=');
       if (eq >= 0) {
-        flags[body.slice(0, eq)] = body.slice(eq + 1);
+        setStringFlag(body.slice(0, eq), body.slice(eq + 1));
         continue;
       }
       if (body.startsWith('no-')) {
@@ -41,7 +61,7 @@ export const parseArgs = (argv: readonly string[]): ParsedArgs => {
       }
       const next = argv[i + 1];
       if (next !== undefined && !next.startsWith('-')) {
-        flags[body] = next;
+        setStringFlag(body, next);
         i += 1;
       } else {
         flags[body] = true;
@@ -62,7 +82,19 @@ export const parseArgs = (argv: readonly string[]): ParsedArgs => {
 
 export const getString = (args: ParsedArgs, name: string): string | undefined => {
   const value = args.flags[name];
-  return typeof value === 'string' ? value : undefined;
+  if (typeof value === 'string') return value;
+  // For one-call sites, return the last value if the flag was repeated
+  // accidentally — preserves backward compat for any caller that didn't
+  // expect arrays.
+  if (Array.isArray(value)) return value[value.length - 1];
+  return undefined;
+};
+
+export const getStrings = (args: ParsedArgs, name: string): string[] => {
+  const value = args.flags[name];
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.slice();
+  return [];
 };
 
 export const getBoolean = (args: ParsedArgs, name: string): boolean | undefined => {
