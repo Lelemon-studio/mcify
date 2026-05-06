@@ -6,14 +6,16 @@ import { connectEventStream, type WsStatus } from '../lib/ws';
 import { ToolsTab } from './tabs/ToolsTab';
 import { CallsTab } from './tabs/CallsTab';
 import { PlaygroundTab } from './tabs/PlaygroundTab';
+import { ChatTab } from './tabs/ChatTab';
 import { SettingsTab } from './tabs/SettingsTab';
 
-type TabId = 'tools' | 'calls' | 'playground' | 'settings';
+type TabId = 'tools' | 'calls' | 'playground' | 'chat' | 'settings';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'tools', label: 'Tools' },
   { id: 'calls', label: 'Calls Log' },
   { id: 'playground', label: 'Playground' },
+  { id: 'chat', label: 'Chat' },
   { id: 'settings', label: 'Settings' },
 ];
 
@@ -150,6 +152,8 @@ export default function App() {
             <CallsTab calls={calls} />
           ) : activeTab === 'playground' ? (
             <PlaygroundTab snapshot={snapshot} />
+          ) : activeTab === 'chat' ? (
+            <ChatTab snapshot={snapshot} />
           ) : (
             <SettingsTab
               snapshot={snapshot}

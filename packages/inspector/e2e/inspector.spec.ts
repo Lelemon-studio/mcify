@@ -91,6 +91,34 @@ test.describe('mcify inspector', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 
+  test('Chat tab renders model picker and rejects empty API key', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Chat', exact: true }).click();
+
+    // The model dropdown should be the only combobox on the panel and
+    // default to the first curated entry (Claude Sonnet 4.6).
+    await expect(page.getByRole('combobox')).toBeVisible();
+
+    // Send button is disabled until there's text — just verify the
+    // textarea is editable.
+    const textarea = page.getByPlaceholder(/Ask the model/);
+    await textarea.fill('hola');
+
+    // With no API key, hitting Send must surface an inline error.
+    await page.getByRole('button', { name: 'Send' }).click();
+    await expect(page.getByText(/Paste your Anthropic API key/)).toBeVisible({ timeout: 3_000 });
+
+    // The key field should be type=password — never persisted.
+    const keyInput = page.getByPlaceholder(/sk-ant-/);
+    await expect(keyInput).toHaveAttribute('type', 'password');
+
+    // Reload — and confirm storage didn't pick up the API key (we never
+    // stored anything in the first place, but assert the negative).
+    await page.reload();
+    const stored = await page.evaluate(() => window.localStorage.getItem('mcify-inspector:apiKey'));
+    expect(stored).toBeNull();
+  });
+
   test('SSE notifications endpoint streams text/event-stream', async ({ page }) => {
     await page.goto('/');
     // Run the fetch from the page so we can abort the stream cleanly. A raw
