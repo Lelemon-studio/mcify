@@ -87,10 +87,21 @@ The scaffold ships an `AGENTS.md` so AI assistants (Claude Code, Cursor, Cody, W
 ```bash
 mcify deploy cloudflare              # Cloudflare Workers, via wrangler
 mcify deploy vercel --prod           # Vercel Edge Functions, via vercel CLI
+mcify deploy fly                     # Fly.io (region scl by default), via flyctl
+mcify deploy railway                 # Railway, via Nixpacks + railway up
 mcify deploy docker --tag :latest    # Multi-stage Dockerfile + docker build
 ```
 
 Pre-flight checks: bundle size warnings for the 1 MB / 4 MB / 10 MB limits each platform enforces.
+
+Per-target guides — required secrets, troubleshooting, CI templates — in [`docs/deploy/`](./docs/deploy/README.md):
+
+- [Cloudflare Workers](./docs/deploy/cloudflare-workers.md)
+- [Vercel Edge](./docs/deploy/vercel.md)
+- [Fly.io](./docs/deploy/fly.md)
+- [Railway](./docs/deploy/railway.md)
+- [Docker](./docs/deploy/docker.md)
+- [Kubernetes (Helm)](./docs/deploy/kubernetes.md)
 
 ## Test without the network
 
