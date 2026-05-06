@@ -39,3 +39,18 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @mcify/inspector exec playwright install --with-deps chromium
+
+      - name: Inspector E2E
+        run: pnpm --filter @mcify/inspector test:e2e
+
+      - name: Upload Playwright trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-trace
+          path: packages/inspector/test-results
+          retention-days: 7
+          if-no-files-found: ignore

@@ -29,6 +29,8 @@
     "dev": "astro dev --port 5174",
     "preview": "astro preview --port 5174",
     "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
     "lint": "echo \"(lint runs at root)\"",
     "typecheck": "astro check --tsconfig tsconfig.json",
     "clean": "rimraf dist .astro .turbo",
@@ -42,8 +44,11 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@astrojs/react": "^4.1.1",
+    "@mcify/core": "workspace:*",
+    "@playwright/test": "^1.49.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "astro": "^5.0.5"
+    "astro": "^5.0.5",
+    "zod": "^3.23.8"
   }
 }

@@ -59,6 +59,74 @@ const buildApp = (opts: {
   app.get('/api/resources', (c) => c.json({ resources: opts.getSnapshot().resources }));
   app.get('/api/prompts', (c) => c.json({ prompts: opts.getSnapshot().prompts }));
 
+  // Server-Sent Events fallback for environments where WebSocket is awkward
+  // (corporate proxies, some edge runtimes, or simple `curl` debugging). The
+  // WS feed at `/events` remains the primary channel — SSE just mirrors the
+  // same event stream as `text/event-stream`. One subscriber per connection.
+  app.get('/api/notifications', (c) => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        const send = (event: RuntimeEvent): void => {
+          const payload = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
+          try {
+            controller.enqueue(encoder.encode(payload));
+          } catch {
+            // Controller already closed by client disconnect — drop and let
+            // the cleanup path remove the listener.
+            off();
+          }
+        };
+
+        // Hello frame so the client gets the snapshot immediately.
+        send({
+          type: 'config:loaded',
+          id: opts.bus.nextId(),
+          timestamp: new Date().toISOString(),
+          serverName: opts.getSnapshot().name,
+          serverVersion: opts.getSnapshot().version,
+          toolCount: opts.getSnapshot().tools.length,
+          resourceCount: opts.getSnapshot().resources.length,
+          promptCount: opts.getSnapshot().prompts.length,
+        });
+
+        const off = opts.bus.on(send);
+
+        // Heartbeat every 15s — keeps intermediaries from idle-closing the
+        // connection and lets the client detect a dead pipe.
+        const heartbeat = setInterval(() => {
+          try {
+            controller.enqueue(encoder.encode(`: ping\n\n`));
+          } catch {
+            clearInterval(heartbeat);
+            off();
+          }
+        }, 15_000);
+
+        const abort = c.req.raw.signal;
+        const cleanup = (): void => {
+          clearInterval(heartbeat);
+          off();
+          try {
+            controller.close();
+          } catch {
+            // Already closed; nothing to do.
+          }
+        };
+        abort.addEventListener('abort', cleanup, { once: true });
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    });
+  });
+
   app.post('/api/tools/:name/invoke', async (c) => {
     const name = c.req.param('name');
     let body: unknown;

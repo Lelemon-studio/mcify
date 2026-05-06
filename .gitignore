@@ -53,6 +53,11 @@ desktop.ini
 .wrangler/
 .dev.vars
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # Misc
 *.tgz
 .npm

@@ -16,6 +16,56 @@
   --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* Light theme — applied when the user picks "light" or when the system
+   preference is light and the user is on "auto". */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafafa;
+    --bg-elev: #ffffff;
+    --bg-elev-2: #f4f4f5;
+    --border: #e5e5e5;
+    --border-strong: #a3a3a3;
+    --text: #0a0a0a;
+    --text-muted: #525252;
+    --text-faint: #a3a3a3;
+    --accent: #ca8a04;
+    --success: #16a34a;
+    --warn: #d97706;
+    --error: #dc2626;
+  }
+}
+
+/* User-forced themes override `prefers-color-scheme` via data-theme. */
+:root[data-theme='dark'] {
+  --bg: #0a0a0a;
+  --bg-elev: #141414;
+  --bg-elev-2: #1c1c1c;
+  --border: #262626;
+  --border-strong: #404040;
+  --text: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-faint: #525252;
+  --accent: #fde047;
+  --success: #4ade80;
+  --warn: #fbbf24;
+  --error: #f87171;
+}
+
+:root[data-theme='light'] {
+  --bg: #fafafa;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #f4f4f5;
+  --border: #e5e5e5;
+  --border-strong: #a3a3a3;
+  --text: #0a0a0a;
+  --text-muted: #525252;
+  --text-faint: #a3a3a3;
+  --accent: #ca8a04;
+  --success: #16a34a;
+  --warn: #d97706;
+  --error: #dc2626;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -377,4 +427,16 @@ a:hover {
 }
 .mono {
   font-family: var(--mono);
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 200px auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.settings-row label {
+  color: var(--text-muted);
+  font-size: 12px;
 }

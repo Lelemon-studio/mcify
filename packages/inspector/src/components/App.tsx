@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RuntimeEvent, ServerSnapshot, ToolCalledEvent } from '../lib/types';
 import { api } from '../lib/api';
+import { useInspectorSettings } from '../lib/settings';
 import { connectEventStream, type WsStatus } from '../lib/ws';
 import { ToolsTab } from './tabs/ToolsTab';
 import { CallsTab } from './tabs/CallsTab';
@@ -23,6 +24,15 @@ export default function App() {
   const [calls, setCalls] = useState<ToolCalledEvent[]>([]);
   const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
   const [activeTab, setActiveTab] = useState<TabId>('tools');
+  const { settings, setSettings, reset } = useInspectorSettings();
+
+  // The WS callback below captures `settings` once. Mirroring it into a ref
+  // keeps the latest retention thresholds visible from inside that callback
+  // without forcing a reconnect on every settings change.
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   // Initial config snapshot.
   useEffect(() => {
@@ -52,9 +62,10 @@ export default function App() {
   // WS event stream.
   useEffect(() => {
     const { close } = connectEventStream((event) => {
-      setEvents((prev) => [event, ...prev].slice(0, 1000));
+      const limits = settingsRef.current;
+      setEvents((prev) => [event, ...prev].slice(0, limits.maxEvents));
       if (event.type === 'tool:called') {
-        setCalls((prev) => [event, ...prev].slice(0, 500));
+        setCalls((prev) => [event, ...prev].slice(0, limits.maxCalls));
       }
       if (event.type === 'config:loaded') {
         // Refresh the snapshot whenever the runtime says config changed.
@@ -71,7 +82,19 @@ export default function App() {
       }
     }, setWsStatus);
     return close;
+    // The retention slices are applied on every event push above; we
+    // intentionally don't reconnect when those numbers change.
   }, []);
+
+  // When the user lowers the retention thresholds, trim the existing
+  // buffers so the change is visible immediately rather than only on
+  // the next event.
+  useEffect(() => {
+    setEvents((prev) =>
+      prev.length > settings.maxEvents ? prev.slice(0, settings.maxEvents) : prev,
+    );
+    setCalls((prev) => (prev.length > settings.maxCalls ? prev.slice(0, settings.maxCalls) : prev));
+  }, [settings.maxEvents, settings.maxCalls]);
 
   return (
     <div className="app">
@@ -128,7 +151,13 @@ export default function App() {
           ) : activeTab === 'playground' ? (
             <PlaygroundTab snapshot={snapshot} />
           ) : (
-            <SettingsTab snapshot={snapshot} eventsTotal={events.length} />
+            <SettingsTab
+              snapshot={snapshot}
+              eventsTotal={events.length}
+              settings={settings}
+              onChange={setSettings}
+              onReset={reset}
+            />
           )}
         </div>
       </div>
