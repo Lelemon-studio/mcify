@@ -1,0 +1,30 @@
+/* mcify brand: yellow accent on the existing Starlight dark theme. */
+
+:root {
+  --sl-color-accent-low: #422006;
+  --sl-color-accent: #ca8a04;
+  --sl-color-accent-high: #fde047;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #fef3c7;
+  --sl-color-accent: #ca8a04;
+  --sl-color-accent-high: #713f12;
+}
+
+/* Tighten code blocks — Starlight's default is generous; we want
+   denser docs because most readers are AI agents now. */
+.expressive-code {
+  font-size: 0.875rem;
+}
+
+/* Highlight the AI-prompt callouts so they're impossible to miss in
+   a long page. */
+.sl-markdown-content .ai-prompt {
+  border: 1px solid var(--sl-color-accent);
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--sl-color-accent) 6%, transparent);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+}

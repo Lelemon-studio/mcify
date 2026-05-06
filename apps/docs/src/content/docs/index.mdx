@@ -1,0 +1,61 @@
+---
+title: mcify
+description: Open-source platform that exposes any API as an MCP server. CLI-first, type-safe, edge-deployable.
+template: splash
+hero:
+  tagline: Wrap any API as an MCP server in minutes. CLI-first. Type-safe end-to-end. Deploy to the edge with one command.
+  actions:
+    - text: Get started
+      link: /start/install/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/Lelemon-studio/mcify
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you can build
+
+<CardGrid stagger>
+  <Card title="A connector to a payment API" icon="laptop">
+    Wrap Khipu / Stripe / your in-house billing as MCP tools any agent (Claude, Cursor, Lelemon Agentes) can call.
+  </Card>
+  <Card title="A microservice gateway for agents" icon="puzzle">
+    `mcify generate from-openapi --spec users=... --spec billing=...` — combines N services into one MCP server with namespaced tools.
+  </Card>
+  <Card title="Tools your agent runs autonomously" icon="rocket">
+    Bearer auth + per-tool rate limits + timeouts. Your agent can call them in production loops, not just chat.
+  </Card>
+  <Card title="Edge-deployed in one command" icon="cloud-download">
+    `mcify deploy cloudflare` (or vercel / fly / railway / docker). Workers cold start in ~1ms.
+  </Card>
+</CardGrid>
+
+## Use mcify with AI
+
+These docs are built so AI assistants can read them. Three things to know:
+
+1. **`docs.mcify.dev/llms.txt`** — index of every page, formatted for LLM ingestion. Paste the URL into Claude / ChatGPT / Cursor and it can navigate the whole site.
+2. **`docs.mcify.dev/llms-full.txt`** — every page inlined into a single file, ~50–80KB. Paste the URL and the model has the entire docs in context.
+3. **[AI prompts](/prompts/how-to-use/)** — copy-paste prompts for Claude Code, Cursor, Windsurf to add a tool, wrap an API, or debug your config.
+
+<LinkCard
+  title="Add a tool to my server (Claude Code prompt)"
+  description="Copy-paste prompt that walks Claude through the canonical pattern with all middleware wiring."
+  href="/prompts/add-tool/"
+/>
+
+## Quick start
+
+```bash
+npx @mcify/cli@alpha init my-mcp
+cd my-mcp
+pnpm install
+pnpm dev
+```
+
+Inspector at [http://localhost:3001](http://localhost:3001), MCP endpoint at `http://localhost:8888/mcp`.
+
+[Connect from Claude Desktop or Cursor →](/start/connect-clients/)
