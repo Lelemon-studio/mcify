@@ -16,6 +16,7 @@
     "clean": "rimraf dist .astro .turbo"
   },
   "dependencies": {
+    "@astrojs/mdx": "^4.0.4",
     "@astrojs/starlight": "^0.32.0",
     "astro": "^5.0.5",
     "sharp": "^0.33.5",

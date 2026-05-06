@@ -3,15 +3,9 @@ title: Connect to Claude / Cursor / agents
 description: Wire your local mcify server to the AI client of your choice.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
 Once `mcify dev` is running, the MCP endpoint is at `http://localhost:8888/mcp`. Every MCP-compatible client connects the same way: URL + (optional) bearer token.
 
-## Pick your client
-
-<Tabs>
-
-<TabItem label="Claude Desktop">
+## Claude Desktop
 
 Edit:
 
@@ -33,11 +27,9 @@ Edit:
 
 Restart Claude Desktop. The tools appear automatically.
 
-</TabItem>
+## Cursor
 
-<TabItem label="Cursor">
-
-Cursor uses the same `mcpServers` shape. Edit `.cursor/config.json` in your project:
+Same `mcpServers` shape. Edit `.cursor/config.json` in your project:
 
 ```json
 {
@@ -52,9 +44,7 @@ Cursor uses the same `mcpServers` shape. Edit `.cursor/config.json` in your proj
 
 Or set it globally in Cursor's settings → MCP. Reload the editor.
 
-</TabItem>
-
-<TabItem label="Claude Code">
+## Claude Code
 
 Claude Code reads from `.mcp.json` at the project root:
 
@@ -71,9 +61,7 @@ Claude Code reads from `.mcp.json` at the project root:
 
 Inside a Claude Code session: `/mcp` lists registered servers and their tools.
 
-</TabItem>
-
-<TabItem label="Custom (your agent)">
+## A custom agent
 
 If you're building your own agent on top of the [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk):
 
@@ -92,17 +80,11 @@ const tools = await client.listTools();
 console.log(tools);
 ```
 
-</TabItem>
-
-<TabItem label="The mcify inspector itself">
+## The mcify inspector itself
 
 `mcify dev` already starts a local web UI at [http://localhost:3001](http://localhost:3001). It has its own **Chat** tab that talks to Claude or GPT-4 directly from the browser, with your tools registered. Bring an API key (Anthropic or OpenAI), pick a model, type a message — the model uses your tools for real.
 
 Useful for kicking the tires before connecting an external agent.
-
-</TabItem>
-
-</Tabs>
 
 ## Verify the connection
 

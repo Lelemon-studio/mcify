@@ -3,13 +3,17 @@ import { Code } from 'astro:components';
 import InspectorMockup from './InspectorMockup.astro';
 
 const sample = `import { defineTool, schema } from '@mcify/core';
-import { requireAuth, rateLimit } from '@mcify/core/middleware';
+import { requireAuth, rateLimit, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
 
 export const createPayment = defineTool({
   name: 'khipu_create_payment',
   description: 'Create a Khipu payment link',
-  middlewares: [requireAuth(), rateLimit({ max: 60, windowMs: 60_000 })],
+  middlewares: [
+    requireAuth(),
+    rateLimit({ max: 60, windowMs: 60_000 }),
+    withTimeout({ ms: 5_000 }),
+  ],
   input: z.object({
     subject: z.string().min(1).max(255),
     currency: z.enum(['CLP', 'USD']),

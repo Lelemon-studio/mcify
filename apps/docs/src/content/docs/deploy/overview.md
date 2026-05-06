@@ -3,18 +3,16 @@ title: Deploy overview
 description: One CLI command per supported target. Pick the one that matches your infra.
 ---
 
-import { LinkCard, CardGrid } from '@astrojs/starlight/components';
-
 mcify ships one CLI command per supported target. Pick whichever fits your infra:
 
-| Target             | Command                       | When to use it                                          |
-| ------------------ | ----------------------------- | ------------------------------------------------------- |
-| Cloudflare Workers | `mcify deploy cloudflare`     | Edge runtime, scale-to-zero, lowest cold start.         |
-| Vercel Edge        | `mcify deploy vercel`         | Already on Vercel, want preview deploys per branch.     |
-| Fly.io             | `mcify deploy fly`            | Real long-running Node, region pinning (default `scl`). |
-| Railway            | `mcify deploy railway`        | Push and go, no Dockerfile to maintain.                 |
-| Docker             | `mcify deploy docker`         | Self-host, ECS, Cloud Run, push to GHCR/ECR.            |
-| Kubernetes         | `helm install ./charts/mcify` | Already on K8s — pair with `mcify deploy docker`.       |
+| Target             | Command                       | Guide                             |
+| ------------------ | ----------------------------- | --------------------------------- |
+| Cloudflare Workers | `mcify deploy cloudflare`     | [cloudflare](/deploy/cloudflare/) |
+| Vercel Edge        | `mcify deploy vercel`         | [vercel](/deploy/vercel/)         |
+| Fly.io             | `mcify deploy fly`            | [fly](/deploy/fly/)               |
+| Railway            | `mcify deploy railway`        | [railway](/deploy/railway/)       |
+| Docker             | `mcify deploy docker`         | [docker](/deploy/docker/)         |
+| Kubernetes         | `helm install ./charts/mcify` | [kubernetes](/deploy/kubernetes/) |
 
 ## The shape of every deploy
 
@@ -25,17 +23,6 @@ Every target follows the same three-step flow:
 3. **Invoke the target's CLI** — `wrangler deploy`, `flyctl deploy`, `railway up`, `vercel deploy`, `docker build`. mcify shells out; it doesn't re-implement the API.
 
 Every command supports `--dry-run` so you can inspect what would be pushed without actually pushing.
-
-## Per-target guides
-
-<CardGrid>
-  <LinkCard title="Cloudflare Workers" href="/deploy/cloudflare/" />
-  <LinkCard title="Vercel Edge" href="/deploy/vercel/" />
-  <LinkCard title="Fly.io" href="/deploy/fly/" />
-  <LinkCard title="Railway" href="/deploy/railway/" />
-  <LinkCard title="Docker" href="/deploy/docker/" />
-  <LinkCard title="Kubernetes (Helm)" href="/deploy/kubernetes/" />
-</CardGrid>
 
 ## CI/CD
 

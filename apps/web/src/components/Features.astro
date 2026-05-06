@@ -1,28 +1,28 @@
 ---
 const features = [
   {
-    title: 'Type-safe end-to-end',
-    body: 'One Zod schema becomes your handler types, JSON Schema for tools/list, and a generated client. No drift between server, client, and docs.',
+    title: 'Write the tool. Skip the boilerplate.',
+    body: 'You write a `defineTool({ input, output, handler })`. We handle the JSON-RPC, the schema validation, the tools/list contract, the auth header, the timeouts.',
   },
   {
-    title: 'Edge-first',
-    body: 'Same handler runs on Cloudflare Workers, Vercel Edge, Bun, Node, or Docker. The runtime ships adapters for each — no rewrites.',
+    title: 'Schemas you write once',
+    body: 'Define a Zod schema and you get the runtime check, the JSON Schema the agent reads, and the TypeScript types — all from the same line.',
   },
   {
-    title: 'AI-agent-aware',
-    body: '`mcify init` ships an AGENTS.md that Claude Code, Cursor, Cody and Copilot Workspace read automatically. Your agent already knows the conventions.',
+    title: 'Auth, rate limits and timeouts ship in',
+    body: 'Bearer or API-key auth at the server, per-tool rate limits, deadline-aware timeouts. All composable. None to install separately.',
   },
   {
-    title: 'Built-in inspector',
-    body: '`mcify dev` opens a local web inspector at :3001 — list of tools, live calls log, playground to invoke by hand. No extra setup.',
+    title: 'See every tool call live',
+    body: '`mcify dev` opens an inspector with a real-time call log, a playground to invoke tools by hand, and a chat tab that talks to Claude or GPT directly.',
   },
   {
-    title: 'Composable middleware',
-    body: '`requireAuth`, `rateLimit`, `withTimeout` ship in core. Wrap any tool. Write your own; they compose like Express/Hono.',
+    title: 'Your AI assistant already knows the rules',
+    body: 'Every project ships an AGENTS.md that Claude Code, Cursor, Windsurf and Copilot Workspace read automatically. New tools land in the same shape every time.',
   },
   {
-    title: 'Deploy in one command',
-    body: '`mcify deploy cloudflare`, `vercel`, or `docker`. Bundles, generates config, deploys. Pre-flight size checks for edge runtimes.',
+    title: 'One command to ship to any cloud',
+    body: '`mcify deploy cloudflare` / `vercel` / `fly` / `railway` / `docker`. Same handler everywhere. The CLI generates the config and calls the platform CLI for you.',
   },
 ];
 ---
@@ -30,8 +30,8 @@ const features = [
 <section class="section border-t border-ink-800/80">
   <div class="container-wide">
     <div class="mb-12">
-      <h2 class="section-title">Why mcify</h2>
-      <p class="section-lead">Six things you'd build by hand the first week — already in the box.</p>
+      <h2 class="section-title">What you actually get</h2>
+      <p class="section-lead">Six things you'd build by hand the first week. Already in the box.</p>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

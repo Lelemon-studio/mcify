@@ -3,13 +3,9 @@ title: Your first MCP server
 description: Add a real tool, see it in the inspector, ship it.
 ---
 
-import { Steps } from '@astrojs/starlight/components';
-
 You scaffolded with `mcify init` and ran `pnpm dev`. Now let's add a real tool that calls a real API.
 
 We'll build a tiny server that wraps a public weather API. Two tools: `weather_get_current` and `weather_forecast`.
-
-<Steps>
 
 1. **Open `mcify.config.ts`.** It has one tool (`greet`). Delete it and the import.
 
@@ -99,8 +95,6 @@ We'll build a tiny server that wraps a public weather API. Two tools: `weather_g
    ```
 
    Click **Invoke**. You get the current weather in Santiago.
-
-</Steps>
 
 ## What just happened
 

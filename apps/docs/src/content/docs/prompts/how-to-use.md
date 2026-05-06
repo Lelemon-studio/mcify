@@ -3,8 +3,6 @@ title: How to use these prompts
 description: Copy a prompt, paste it into Claude Code / Cursor / Windsurf, get production-ready output.
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
-
 The pages in this section are **prompts you can copy and paste into your AI coding assistant** to get correct, idiomatic mcify code on the first try. Each one assumes the assistant has access to these docs (via `llms-full.txt`) and your local repo.
 
 ## Two ways to use them
@@ -37,20 +35,12 @@ mcify ships three things specifically for this loop:
 
 ## Available prompts
 
-<CardGrid>
-  <Card title="Add a tool" icon="add-document">
-    Tell the assistant what API call you want to expose. It scaffolds the tool with the right schemas, middleware, and tests. [Open prompt →](/prompts/add-tool/)
-  </Card>
-  <Card title="Wrap an existing API" icon="puzzle">
-    You point at an OpenAPI spec or a few endpoints. The assistant generates a full mcify connector. [Open prompt →](/prompts/wrap-api/)
-  </Card>
-  <Card title="Debug a misbehaving tool" icon="warning">
-    Paste the error or the agent transcript. The assistant locates the bug (schema mismatch, auth, timeout, side effect). [Open prompt →](/prompts/debug-tool/)
-  </Card>
-  <Card title="Migrate to multi-spec" icon="rocket">
-    You already have one MCP server. The assistant adds N microservices behind it via `generate from-openapi`. [Open prompt →](/prompts/migrate-multispec/)
-  </Card>
-</CardGrid>
+| Prompt                                               | What it does                                                                                                              |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [Add a tool](/prompts/add-tool/)                     | Tell the assistant what API call you want to expose. It scaffolds the tool with the right schemas, middleware, and tests. |
+| [Wrap an existing API](/prompts/wrap-api/)           | Point at an OpenAPI spec or a few endpoints. The assistant generates a full mcify connector.                              |
+| [Debug a misbehaving tool](/prompts/debug-tool/)     | Paste the error or the agent transcript. The assistant locates the bug (schema mismatch, auth, timeout, side effect).     |
+| [Migrate to multi-spec](/prompts/migrate-multispec/) | You already have one MCP server. The assistant adds N microservices behind it via `generate from-openapi`.                |
 
 ## Building your own
 

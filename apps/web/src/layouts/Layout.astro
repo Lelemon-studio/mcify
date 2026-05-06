@@ -10,7 +10,7 @@ interface Props {
 }
 
 const {
-  title = 'mcify — Turn any API into an MCP server',
+  title = 'mcify — Turn your API into an MCP server',
   description = 'Open-source TypeScript framework for building Model Context Protocol servers. Type-safe end-to-end with Zod, edge-deployable to Cloudflare Workers / Vercel / Fly / Railway / Docker, AI-agent-ready.',
   ogImage = '/og.png',
   noindex = false,
@@ -99,14 +99,14 @@ const webAnalyticsToken = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN ?? '';
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:alt" content="mcify — Turn any API into an MCP server" />
+    <meta property="og:image:alt" content="mcify — Turn your API into an MCP server" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageAbsolute} />
-    <meta name="twitter:image:alt" content="mcify — Turn any API into an MCP server" />
+    <meta name="twitter:image:alt" content="mcify — Turn your API into an MCP server" />
 
     <!-- Discovery for AI agents — every page is also available as raw markdown
          on docs.mcify.dev; this hint points crawlers at the consolidated bundle. -->

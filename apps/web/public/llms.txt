@@ -1,6 +1,6 @@
 # mcify
 
-> Open source platform that exposes any API as a Model Context Protocol (MCP) server. CLI-first, type-safe (Zod end-to-end), deployable to Cloudflare Workers, Vercel Edge, Bun, Node, or Docker. Built for developers using AI agents (Claude, Cursor, custom). Apache 2.0. Maintained by Lelemon Studio.
+> Open-source TypeScript framework to expose your API as a Model Context Protocol (MCP) server. CLI-first, type-safe (Zod end-to-end), deployable to Cloudflare Workers, Vercel Edge, Fly.io, Railway, Bun, Node, or Docker. Built for developers using AI agents (Claude, Cursor, custom). Apache 2.0. Maintained by Lelemon Studio.
 
 ## What it is
 
@@ -107,10 +107,14 @@ Calls go through the same dispatch path production HTTP traffic uses; no protoco
 ```bash
 mcify deploy cloudflare              # Cloudflare Workers, via wrangler
 mcify deploy vercel --prod           # Vercel Edge Functions, via vercel CLI
-mcify deploy docker --tag :latest    # Multi-stage Dockerfile + docker build
+mcify deploy fly                     # Fly.io, via flyctl (default region: scl)
+mcify deploy railway                 # Railway, via railway CLI + Nixpacks
+mcify deploy docker --push           # Multi-stage Dockerfile + docker build/push
 ```
 
-All three accept `--config <path>` and `--dry-run`. Pre-flight bundle size checks for edge runtimes (1 MB Workers free, 4 MB Vercel Edge, 10 MB Workers paid).
+All five accept `--config <path>` and `--dry-run`. Pre-flight bundle size checks for edge runtimes (1 MB Workers free, 4 MB Vercel Edge, 10 MB Workers paid). Per-target guides at https://docs.mcify.dev/deploy/.
+
+A Helm chart for Kubernetes lives at `charts/mcify/` — pair with `mcify deploy docker --push` to build the image, then `helm install ./charts/mcify` for the cluster install.
 
 ## Architecture invariants
 
@@ -143,7 +147,29 @@ For AI agents working in mcify projects:
 
 ## Reference connectors
 
-- `@mcify/example-khipu` — Chilean payment links. Two tools (`khipu_create_payment`, `khipu_get_payment_status`) wrapped in `requireAuth` + `rateLimit` + `withTimeout`. Source at https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu — clone with `mcify init --template example-khipu`.
+Three live connectors, all in `packages/examples/` with bilingual READMEs (EN + ES):
+
+- **`@mcify/example-khipu`** — Chilean payment links. Two tools (`khipu_create_payment`, `khipu_get_payment_status`). Source: https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu. Clone with `mcify init --template example-khipu`.
+- **`@mcify/example-bsale`** — Chilean DTE / facturación electrónica. Four tools (`bsale_emit_dte`, `bsale_list_invoices`, `bsale_get_invoice`, `bsale_list_clients`). Lower rate-limit on emit because DTEs have legal weight. Source: https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/bsale.
+- **`@mcify/example-fintoc`** — Open banking for Chile + Mexico. Three tools (`fintoc_list_accounts`, `fintoc_get_account_balance`, `fintoc_list_movements`). Two-credential auth: org `secret_key` on the server + per-user `link_token` as a tool input. Source: https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/fintoc.
+
+## Microservices via OpenAPI
+
+`mcify generate from-openapi` reads OpenAPI 3.x specs (JSON or YAML) and emits Zod-typed tools. Repeat `--spec` to combine N services into one MCP server with namespaced tool names:
+
+```bash
+mcify generate from-openapi \
+  --spec users=https://api.example.com/users/openapi.json \
+  --spec billing=https://api.example.com/billing/openapi.json
+```
+
+The agent sees one unified catalog (`users_*`, `billing_*`); you deploy one binary. Full guide: https://docs.mcify.dev/guides/from-openapi/.
+
+## Documentation site
+
+- Full docs: https://docs.mcify.dev
+- AI-friendly bundle (every page in one file): https://docs.mcify.dev/llms-full.txt
+- Copy-paste prompts for Claude Code / Cursor: https://docs.mcify.dev/prompts/how-to-use/
 
 ## Resources
 
@@ -156,6 +182,13 @@ For AI agents working in mcify projects:
 
 ## Status
 
-Public alpha. Core, runtime, CLI, inspector all working end-to-end. Phase B (inspector) and Phase C (Khipu connector) shipped. Phase D (deploy commands for Cloudflare / Vercel / Docker) shipped. Next: more connectors (Bsale, Fintoc), Fly.io and Railway adapters, hosted cloud (Phase E, V2).
+Public alpha. Core (`@mcify/core`), runtime (`@mcify/runtime`), CLI (`@mcify/cli`), inspector (`@mcify/inspector`) all working end-to-end. Shipped to date:
+
+- Phase A (core + CLI + alpha publish to npm) ✅
+- Phase B (inspector with Tools / Calls Log / Playground / Chat tab + Playwright E2E) ✅
+- Phase C (3 connectors — Khipu, Bsale, Fintoc — plus `from-openapi` generator and the docs site at docs.mcify.dev) — only dogfooding step pending
+- Phase D (deploy commands for Cloudflare Workers, Vercel Edge, Fly.io, Railway, Docker, plus a Helm chart for Kubernetes and CI workflow templates) ✅
+
+Next: dogfooding (Khipu MCP deployed against Lelemon Agentes prod), then mcify Cloud (multi-tenant hosting, V2) and the marketplace (V2).
 
 Use the `@alpha` npm tag for now; `latest` carries placeholder releases until V1 cuts.

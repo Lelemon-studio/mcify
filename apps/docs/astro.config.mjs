@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
 import starlight from '@astrojs/starlight';
 import starlightLlmsTxt from 'starlight-llms-txt';
 
@@ -144,5 +145,8 @@ export default defineConfig({
         }),
       ],
     }),
+    // MDX after starlight() — Starlight's astro-expressive-code (code blocks
+    // with line highlighting + filename headers) must be set up first.
+    mdx(),
   ],
 });
