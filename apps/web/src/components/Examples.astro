@@ -2,24 +2,24 @@
 const examples = [
   {
     name: 'Khipu',
-    summary: 'Chilean payment links — sandbox-ready reference connector with two tools and a Zod-validated client.',
+    summary: 'Chilean payment links — two tools (create, status), bearer auth, fetch-mocked tests. The canonical "wrap a payment API" reference.',
     href: 'https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/khipu',
     template: 'mcify init my-server --template example-khipu',
     status: 'available',
   },
   {
     name: 'Bsale',
-    summary: 'Chilean DTE / billing — emit invoices, list documents, look up clients.',
-    href: '#',
+    summary: 'Chilean DTE / facturación electrónica — four tools: emit_dte, list_invoices, get_invoice, list_clients. Lower rate-limit on emit because DTEs have legal weight.',
+    href: 'https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/bsale',
     template: '',
-    status: 'planned',
+    status: 'available',
   },
   {
     name: 'Fintoc',
-    summary: 'Banking aggregation across Chile and Mexico — list accounts, list movements, balances.',
-    href: '#',
+    summary: 'Open banking for Chile and México — list accounts, list movements, get balance. Two-credential auth: org secret_key on the server, per-user link_token as a tool input.',
+    href: 'https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/fintoc',
     template: '',
-    status: 'planned',
+    status: 'available',
   },
 ];
 ---
@@ -45,7 +45,9 @@ const examples = [
           <p class="mb-4 flex-1 text-sm leading-relaxed text-ink-400">{e.summary}</p>
           {e.status === 'available' ? (
             <>
-              <code class="mb-3 block overflow-x-auto rounded-md bg-ink-950 p-2 font-mono text-[11.5px] text-ink-200">{e.template}</code>
+              {e.template && (
+                <code class="mb-3 block overflow-x-auto rounded-md bg-ink-950 p-2 font-mono text-[11.5px] text-ink-200">{e.template}</code>
+              )}
               <a class="text-xs text-accent hover:underline" href={e.href} rel="noreferrer noopener" target="_blank">
                 Source on GitHub →
               </a>

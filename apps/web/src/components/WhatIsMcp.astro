@@ -1,0 +1,69 @@
+---
+const facts = [
+  {
+    label: 'What an MCP server is',
+    body:
+      'A small program that exposes "tools" — typed functions the agent can call. <code>tools/list</code> tells the agent what exists; <code>tools/call</code> runs one. That\'s the whole protocol surface.',
+  },
+  {
+    label: 'What you usually have to write',
+    body:
+      'JSON-RPC dispatcher, schema-to-JSON-Schema, auth (bearer / API key / OAuth), per-tool rate limits, timeouts, structured logging, an HTTP transport, a stdio transport, multi-target builds, an inspector to debug it…',
+  },
+  {
+    label: 'What mcify writes for you',
+    body:
+      'All of it. You write a <code>defineTool({ input, output, handler })</code> and wire it into <code>defineConfig</code>. The framework does the rest.',
+  },
+];
+---
+
+<section class="section border-t border-ink-800/80">
+  <div class="container-wide">
+    <div class="mb-10">
+      <h2 class="section-title">What is this for</h2>
+      <p class="section-lead">
+        AI agents need a way to do real work in your systems — issue refunds, query inventory,
+        send emails, look up users. The Model Context Protocol is the spec. mcify is the framework.
+      </p>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      {facts.map((f) => (
+        <div class="card">
+          <div class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-accent">{f.label}</div>
+          <p class="text-sm leading-relaxed text-ink-300" set:html={f.body}></p>
+        </div>
+      ))}
+    </div>
+
+    <div class="mt-8 grid gap-3 md:grid-cols-2">
+      <div class="rounded-lg border border-ink-800 bg-ink-900/40 p-5">
+        <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-ink-500">
+          <span class="inline-block h-2 w-2 rounded-full bg-ink-600"></span>
+          Without mcify
+        </div>
+        <ul class="space-y-1.5 text-sm text-ink-400">
+          <li>Hand-write the JSON-RPC dispatch layer</li>
+          <li>Manually keep schemas in sync with handler types</li>
+          <li>Glue together auth, rate limits, timeouts per tool</li>
+          <li>Build a separate dev inspector to debug calls</li>
+          <li>Pick + configure a deploy target by hand</li>
+        </ul>
+      </div>
+      <div class="rounded-lg border border-accent/30 bg-accent/5 p-5">
+        <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-accent">
+          <span class="inline-block h-2 w-2 rounded-full bg-accent"></span>
+          With mcify
+        </div>
+        <ul class="space-y-1.5 text-sm text-ink-200">
+          <li><code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">defineTool</code> — schema, middleware, handler in one block</li>
+          <li>Zod is the source of truth — types, JSON Schema, runtime validation</li>
+          <li><code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">requireAuth</code> + <code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">rateLimit</code> + <code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">withTimeout</code> compose like Hono</li>
+          <li><code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">mcify dev</code> ships an inspector with a Chat tab against any model</li>
+          <li><code class="rounded bg-ink-900 px-1.5 py-0.5 text-[12px]">mcify deploy &lt;target&gt;</code> for Workers / Vercel / Fly / Railway / Docker / K8s</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
