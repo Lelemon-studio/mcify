@@ -224,4 +224,5 @@ The agent can `result.paymentUrl` an object. It has to grep a string. Always ret
 ## Next
 
 - [Creating effective tools](/guides/creating-effective-tools/) — the positive-form best practices.
+- [Multi-user / multi-tenant](/guides/multi-user/) — covers the most dangerous antipattern of all (reading `userId` from input). Read this before shipping anything that handles user data.
 - [Concepts → Tools](/concepts/tools/) — the `defineTool` API reference.

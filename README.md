@@ -94,14 +94,14 @@ mcify deploy docker --tag :latest    # Multi-stage Dockerfile + docker build
 
 Pre-flight checks: bundle size warnings for the 1 MB / 4 MB / 10 MB limits each platform enforces.
 
-Per-target guides — required secrets, troubleshooting, CI templates — in [`docs/deploy/`](./docs/deploy/README.md):
+Per-target guides — required secrets, troubleshooting, CI templates — at [docs.mcify.dev/deploy](https://docs.mcify.dev/deploy/overview/):
 
-- [Cloudflare Workers](./docs/deploy/cloudflare-workers.md)
-- [Vercel Edge](./docs/deploy/vercel.md)
-- [Fly.io](./docs/deploy/fly.md)
-- [Railway](./docs/deploy/railway.md)
-- [Docker](./docs/deploy/docker.md)
-- [Kubernetes (Helm)](./docs/deploy/kubernetes.md)
+- [Cloudflare Workers](https://docs.mcify.dev/deploy/cloudflare/)
+- [Vercel Edge](https://docs.mcify.dev/deploy/vercel/)
+- [Fly.io](https://docs.mcify.dev/deploy/fly/)
+- [Railway](https://docs.mcify.dev/deploy/railway/)
+- [Docker](https://docs.mcify.dev/deploy/docker/)
+- [Kubernetes (Helm)](https://docs.mcify.dev/deploy/kubernetes/)
 
 ## Test without the network
 

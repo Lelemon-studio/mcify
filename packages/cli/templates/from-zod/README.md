@@ -43,4 +43,4 @@ mcify deploy railway         # Railway
 mcify deploy docker --push   # Docker → registry
 ```
 
-See https://github.com/Lelemon-studio/mcify/tree/main/docs/deploy for per-target details.
+See https://docs.mcify.dev/deploy/overview/ for per-target details.

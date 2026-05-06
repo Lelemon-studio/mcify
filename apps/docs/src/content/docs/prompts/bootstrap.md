@@ -180,12 +180,13 @@ When you're done, the project should:
 
 ## Save it as a slash command
 
-Drop the prompt block into your dotfiles so it's available across projects:
+Drop the prompt body into your dotfiles so it's available across projects. The raw markdown lives in our GitHub repo — that's the URL with the prompt's source:
 
 ```bash
 # Claude Code (project-level)
 mkdir -p .claude/commands
-curl -o .claude/commands/bootstrap-mcify.md https://docs.mcify.dev/prompts/bootstrap.md.txt
+curl -L -o .claude/commands/bootstrap-mcify.md \
+  https://raw.githubusercontent.com/Lelemon-studio/mcify/main/apps/docs/src/content/docs/prompts/bootstrap.md
 
 # Then in Claude Code: /bootstrap-mcify
 ```
@@ -193,10 +194,11 @@ curl -o .claude/commands/bootstrap-mcify.md https://docs.mcify.dev/prompts/boots
 ```bash
 # Cursor (.cursor/rules/)
 mkdir -p .cursor/rules
-curl -o .cursor/rules/bootstrap-mcify.md https://docs.mcify.dev/prompts/bootstrap.md.txt
+curl -L -o .cursor/rules/bootstrap-mcify.md \
+  https://raw.githubusercontent.com/Lelemon-studio/mcify/main/apps/docs/src/content/docs/prompts/bootstrap.md
 ```
 
-The `.md.txt` URL serves the prompt body without the surrounding docs chrome.
+After download, open the file and replace the `<<<...>>>` block with your project name + first-tool description before invoking the slash command.
 
 ## Why this works (and where it can fail)
 

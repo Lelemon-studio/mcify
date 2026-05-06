@@ -16,11 +16,12 @@ Open the prompt page, click the copy button on the prompt block, paste into your
 Each prompt has a frontmatter block at the top you can save as a project-level slash command:
 
 ```bash
-# Claude Code
+# Claude Code — pulls the raw markdown from the repo
 mkdir -p .claude/commands
-curl -o .claude/commands/add-mcp-tool.md https://docs.mcify.dev/prompts/add-tool/raw
+curl -L -o .claude/commands/add-mcp-tool.md \
+  https://raw.githubusercontent.com/Lelemon-studio/mcify/main/apps/docs/src/content/docs/prompts/add-tool.md
 
-# Cursor (similar — paste into .cursor/rules/)
+# Cursor — same idea, drop in .cursor/rules/
 ```
 
 Then `/add-mcp-tool` in Claude Code triggers the prompt with the rest of your conversation as input.

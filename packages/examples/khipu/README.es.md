@@ -62,7 +62,7 @@ mcify build --target node
 node dist/server.mjs
 ```
 
-O deploy a Workers / Fly / Railway / Docker — ver [docs/deploy/](https://github.com/Lelemon-studio/mcify/tree/main/docs/deploy).
+O deploy a Workers / Fly / Railway / Docker — ver [docs.mcify.dev/deploy](https://docs.mcify.dev/deploy/overview/).
 
 ## Conectarlo a un agente
 

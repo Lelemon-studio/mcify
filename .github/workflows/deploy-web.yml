@@ -1,12 +1,13 @@
 name: Deploy web
 
 on:
+  # Every push to main redeploys. We previously had a `paths:` filter
+  # restricting this to `apps/web/**`, but that meant a failed deploy
+  # never re-ran on the next non-web commit — prod could lag head silently.
+  # The build is ~3s; cost of always running is negligible vs the cost of
+  # a stale prod.
   push:
     branches: [main]
-    paths:
-      - 'apps/web/**'
-      - '.github/workflows/deploy-web.yml'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 concurrency:

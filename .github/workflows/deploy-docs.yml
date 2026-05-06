@@ -1,12 +1,11 @@
 name: Deploy docs
 
 on:
+  # Every push to main redeploys (no paths filter). See deploy-web.yml for
+  # the rationale: the failed-deploy / stale-prod risk outweighs the small
+  # build-time cost.
   push:
     branches: [main]
-    paths:
-      - 'apps/docs/**'
-      - '.github/workflows/deploy-docs.yml'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 concurrency:

@@ -52,6 +52,8 @@ auth: oauth({
 
 The runtime validates JWTs against the provider's JWKS. The decoded claims land in `ctx.auth.claims` so your handlers can do per-user authorization.
 
+> **Building a multi-user server?** Read the [Multi-user / multi-tenant](/guides/multi-user/) guide — it walks the full pattern (OAuth, custom verify, scoping queries by `userId`, the antipattern that breaks isolation).
+
 ## Custom verify
 
 If your token shape doesn't fit `bearer` / `apiKey`, pass a `verify` function:

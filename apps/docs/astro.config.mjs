@@ -75,6 +75,7 @@ export default defineConfig({
           items: [
             { label: 'Creating effective tools', slug: 'guides/creating-effective-tools' },
             { label: 'Antipatterns to avoid', slug: 'guides/antipatterns' },
+            { label: 'Multi-user / multi-tenant', slug: 'guides/multi-user' },
             { label: 'From OpenAPI / microservices', slug: 'guides/from-openapi' },
             { label: 'Testing without the network', slug: 'guides/testing' },
             { label: 'Observability + logging', slug: 'guides/observability' },
