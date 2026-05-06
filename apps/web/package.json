@@ -6,9 +6,9 @@
   "description": "mcify.dev — landing site",
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "astro dev --port 4321",
+    "dev": "astro dev --port 4399",
     "build": "astro build",
-    "preview": "astro preview --port 4321",
+    "preview": "astro preview --port 4399",
     "test": "vitest run --passWithNoTests",
     "lint": "echo \"(lint runs at root)\"",
     "typecheck": "astro check --tsconfig tsconfig.json",
