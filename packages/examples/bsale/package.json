@@ -1,0 +1,37 @@
+{
+  "name": "@mcify/example-bsale",
+  "version": "0.1.0-alpha.0",
+  "private": true,
+  "description": "Bsale (Chile) MCP server — DTE / facturación electrónica connector built with mcify.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/bsale#readme",
+  "bugs": "https://github.com/Lelemon-studio/mcify/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lelemon-studio/mcify.git",
+    "directory": "packages/examples/bsale"
+  },
+  "author": "Lelemon Studio <contacto@lelemon.cl>",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo \"(lint runs at root)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "@mcify/core": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@mcify/runtime": "workspace:*"
+  }
+}

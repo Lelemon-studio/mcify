@@ -4,6 +4,8 @@ Reference MCP server for [Khipu](https://khipu.com) — Chilean bank-transfer pa
 
 > **Status:** alpha. Used as the canonical example for "how do I expose a payment API as an MCP server" + dogfooded by Lelemon Agentes against Khipu sandbox.
 
+[Leer en español](./README.es.md)
+
 ## What it does
 
 Exposes two MCP tools that any compatible client (Claude Desktop, Cursor, Claude Code, Lelemon Agentes, custom agents) can invoke:

@@ -114,6 +114,32 @@ importers:
         specifier: ^3.23.5
         version: 3.25.2(zod@3.25.76)
 
+  packages/examples/bsale:
+    dependencies:
+      '@mcify/core':
+        specifier: workspace:*
+        version: link:../../core
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@mcify/runtime':
+        specifier: workspace:*
+        version: link:../../runtime
+
+  packages/examples/fintoc:
+    dependencies:
+      '@mcify/core':
+        specifier: workspace:*
+        version: link:../../core
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@mcify/runtime':
+        specifier: workspace:*
+        version: link:../../runtime
+
   packages/examples/khipu:
     dependencies:
       '@mcify/core':
