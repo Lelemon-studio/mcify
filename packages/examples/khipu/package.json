@@ -1,6 +1,6 @@
 {
   "name": "@mcify/example-khipu",
-  "version": "0.1.0-alpha.2",
+  "version": "0.2.0-alpha.0",
   "private": true,
   "description": "Khipu (Chile) MCP server — example connector built with mcify.",
   "license": "Apache-2.0",
@@ -25,6 +25,7 @@
     "test:watch": "vitest",
     "lint": "echo \"(lint runs at root)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "admin": "tsx scripts/admin.ts",
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@mcify/runtime": "workspace:*"
+    "@mcify/runtime": "workspace:*",
+    "tsx": "^4.19.2"
   }
 }

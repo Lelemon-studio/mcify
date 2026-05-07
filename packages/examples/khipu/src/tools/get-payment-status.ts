@@ -1,31 +1,33 @@
-import { defineTool, schema } from '@mcify/core';
+import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { KhipuClient } from '../client.js';
+import { KhipuClient } from '../client.js';
+import { sessionFromContext, type KhipuSessionStore } from '../sessions.js';
+import { paymentLinkResultSchema } from '../types-payment.js';
 
-export const createKhipuGetPaymentStatusTool = (client: KhipuClient) =>
+export const createKhipuGetPaymentStatusTool = (sessions: KhipuSessionStore) =>
   defineTool({
     name: 'khipu_get_payment_status',
     description:
-      'Look up a Khipu payment by id. Returns the current status (pending, done, failed, ...) plus the original subject, currency, amount, and your transaction id if you set one.',
+      'Look up a Khipu payment by id. Returns the portable status (pending, paid, expired, ' +
+      'cancelled, failed, refunded), the original subject and amount, and — if paid — when it ' +
+      'settled and the receipt URL.',
     middlewares: [
       requireAuth({ message: 'khipu_get_payment_status requires authentication' }),
       rateLimit({ max: 120, windowMs: 60_000 }),
       withTimeout({ ms: 5_000 }),
     ],
     input: z.object({
-      paymentId: schema.id(64).describe('Khipu payment id, as returned by khipu_create_payment'),
+      paymentId: z
+        .string()
+        .min(1)
+        .max(64)
+        .describe('Khipu payment id, as returned by khipu_create_payment_link.'),
     }),
-    output: z.object({
-      paymentId: z.string(),
-      status: z.enum(['pending', 'verifying', 'done', 'committed', 'failed', 'rejected']),
-      statusDetail: z.string().optional(),
-      subject: z.string(),
-      currency: z.string(),
-      amount: z.number(),
-      transactionId: z.string().optional(),
-      receiptUrl: z.string().url().optional(),
-      pictureUrl: z.string().url().optional(),
-    }),
-    handler: async ({ paymentId }) => client.getPayment(paymentId),
+    output: paymentLinkResultSchema,
+    handler: async ({ paymentId }, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const client = new KhipuClient({ apiKey: session.apiKey });
+      return client.getPayment(paymentId);
+    },
   });

@@ -4,6 +4,6 @@
     "rootDir": ".",
     "outDir": "./dist"
   },
-  "include": ["src/**/*", "mcify.config.ts"],
+  "include": ["src/**/*", "scripts/**/*", "mcify.config.ts"],
   "exclude": ["dist", "node_modules", "**/*.test.ts"]
 }
