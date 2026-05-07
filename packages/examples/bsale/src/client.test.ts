@@ -13,9 +13,8 @@ const err = (status: number, body: unknown): Response =>
     headers: { 'content-type': 'application/json' },
   });
 
-// Use a fixed unix timestamp so the date math is deterministic across
-// runners. 1715126400 = 2024-05-08 00:00:00 UTC.
-const FIXED_TIMESTAMP = 1715126400;
+// Fixed unix timestamp (seconds, GMT) — 2024-05-08 00:00:00 UTC.
+const FIXED_TS = 1715126400;
 
 describe('BsaleClient', () => {
   it('throws when constructed without an access token', () => {
@@ -24,24 +23,30 @@ describe('BsaleClient', () => {
   });
 
   describe('emitDte', () => {
-    it('POSTs to /documents.json with the access_token header', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(
-        ok({
-          id: 99,
-          number: 1234,
-          emissionDate: FIXED_TIMESTAMP,
-          totalAmount: 50000,
-          document_type: { id: 33 },
-          state: 0,
-          urlPublicPdf: 'https://bsale.io/pdf/99.pdf',
-        }),
+    it('POSTs to /documents.json with the access_token header (literal, no Bearer)', async () => {
+      const fetchMock = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          ok({
+            id: 99,
+            number: 1234,
+            emissionDate: FIXED_TS,
+            totalAmount: 50000,
+            netAmount: 42017,
+            taxAmount: 7983,
+            document_type: { id: 33 },
+            state: 0,
+            informedSii: 0,
+            urlPdf: 'https://bsale.io/pdf/99.pdf',
+            urlPublicView: 'https://bsale.io/v/99',
+          }),
+        ),
       );
 
       const client = new BsaleClient({ accessToken: 'bs_test', fetch: fetchMock });
 
       const result = await client.emitDte({
         documentTypeId: 33,
-        details: [{ netUnitValue: 50000, quantity: 1, description: 'Service' }],
+        details: [{ netUnitValue: 42017, quantity: 1, description: 'Service', taxId: [1, 2] }],
         client: { code: '11.111.111-1', company: 'Acme SpA' },
       });
 
@@ -51,44 +56,116 @@ describe('BsaleClient', () => {
       const reqInit = init as RequestInit;
       expect(reqInit.method).toBe('POST');
       const headers = reqInit.headers as Record<string, string>;
+      // Literal `access_token` header per Bsale docs — NOT Authorization Bearer.
       expect(headers['access_token']).toBe('bs_test');
-      expect(headers['content-type']).toBe('application/json');
+      expect(headers['Authorization']).toBeUndefined();
       const body = JSON.parse(reqInit.body as string);
       expect(body.documentTypeId).toBe(33);
-      expect(body.details[0].netUnitValue).toBe(50000);
+      expect(body.details[0].netUnitValue).toBe(42017);
       expect(body.details[0].comment).toBe('Service');
+      // Bsale's quirk: taxId is a string with bracketed CSV.
+      expect(body.details[0].taxId).toBe('[1,2]');
       expect(body.client.code).toBe('11.111.111-1');
 
       expect(result).toMatchObject({
         id: 99,
         number: 1234,
         documentTypeId: 33,
-        status: 'accepted',
+        lifecycle: 'active',
+        siiStatus: 'correct',
         urlPdf: 'https://bsale.io/pdf/99.pdf',
+        urlPublicView: 'https://bsale.io/v/99',
         emissionDate: '2024-05-08',
+        netAmount: 42017,
+        taxAmount: 7983,
       });
+    });
+
+    it('converts emissionDate (YYYY-MM-DD) to a unix timestamp in GMT', async () => {
+      const fetchMock = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          ok({
+            id: 1,
+            number: 1,
+            emissionDate: FIXED_TS,
+            totalAmount: 0,
+            document_type: { id: 33 },
+            state: 0,
+            informedSii: 0,
+          }),
+        ),
+      );
+      const client = new BsaleClient({ accessToken: 'bs_test', fetch: fetchMock });
+
+      await client.emitDte({
+        documentTypeId: 33,
+        emissionDate: '2024-05-08',
+        details: [{ netUnitValue: 100, quantity: 1 }],
+        client: { code: '11.111.111-1' },
+      });
+
+      const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+      // 2024-05-08 00:00:00 UTC = 1715126400.
+      expect(body.emissionDate).toBe(FIXED_TS);
+    });
+
+    it('forwards optional fields (officeId, declareSii, salesId, expirationDate)', async () => {
+      const fetchMock = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          ok({
+            id: 1,
+            number: 1,
+            emissionDate: FIXED_TS,
+            totalAmount: 0,
+            document_type: { id: 33 },
+            state: 0,
+            informedSii: 0,
+          }),
+        ),
+      );
+      const client = new BsaleClient({ accessToken: 'bs_test', fetch: fetchMock });
+
+      await client.emitDte({
+        documentTypeId: 33,
+        officeId: 7,
+        declareSii: 0,
+        salesId: 'order-42',
+        expirationDate: '2024-06-08',
+        details: [{ netUnitValue: 100, quantity: 1 }],
+        clientId: 5,
+      });
+
+      const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+      expect(body.officeId).toBe(7);
+      expect(body.declareSii).toBe(0);
+      expect(body.salesId).toBe('order-42');
+      expect(body.expirationDate).toBe(Date.UTC(2024, 5, 8) / 1000);
+      expect(body.clientId).toBe(5);
     });
   });
 
   describe('listInvoices', () => {
-    it('serializes filters as the lowercased query params Bsale expects', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(
-        ok({
-          href: '...',
-          count: 1,
-          limit: 10,
-          offset: 0,
-          items: [
-            {
-              id: 1,
-              number: 100,
-              emissionDate: FIXED_TIMESTAMP,
-              totalAmount: 1000,
-              document_type: { id: 33 },
-              state: 0,
-            },
-          ],
-        }),
+    it("serializes date range as Bsale's emissiondaterange=[from,to] with timestamps", async () => {
+      const fetchMock = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          ok({
+            href: '...',
+            count: 1,
+            limit: 10,
+            offset: 0,
+            items: [
+              {
+                id: 1,
+                number: 100,
+                emissionDate: FIXED_TS,
+                totalAmount: 1000,
+                document_type: { id: 33 },
+                state: 0,
+                informedSii: 1,
+              },
+            ],
+          }),
+        ),
       );
 
       const client = new BsaleClient({ accessToken: 'bs_test', fetch: fetchMock });
@@ -97,32 +174,43 @@ describe('BsaleClient', () => {
         emissionDateFrom: '2024-05-01',
         emissionDateTo: '2024-05-31',
         documentTypeId: 33,
+        codeSii: 33,
       });
 
       const [url] = fetchMock.mock.calls[0]!;
       const parsed = new URL(url as string);
       expect(parsed.searchParams.get('limit')).toBe('10');
-      expect(parsed.searchParams.get('emissiondatefrom')).toBe('2024-05-01');
-      expect(parsed.searchParams.get('emissiondateto')).toBe('2024-05-31');
+      // emissiondaterange=[from,to], each side a unix timestamp in GMT.
+      const fromTs = Date.UTC(2024, 4, 1) / 1000;
+      const toTs = Date.UTC(2024, 4, 31) / 1000;
+      expect(parsed.searchParams.get('emissiondaterange')).toBe(`[${fromTs},${toTs}]`);
+      // emissiondatefrom/to don't exist in Bsale.
+      expect(parsed.searchParams.has('emissiondatefrom')).toBe(false);
+      expect(parsed.searchParams.has('emissiondateto')).toBe(false);
       expect(parsed.searchParams.get('documenttypeid')).toBe('33');
+      expect(parsed.searchParams.get('codesii')).toBe('33');
 
       expect(out).toHaveLength(1);
       expect(out[0]?.id).toBe(1);
-      expect(out[0]?.status).toBe('accepted');
+      expect(out[0]?.lifecycle).toBe('active');
+      expect(out[0]?.siiStatus).toBe('sent');
     });
   });
 
   describe('getInvoice', () => {
-    it('GETs /documents/:id.json and unwraps the response', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(
-        ok({
-          id: 42,
-          number: 7,
-          emissionDate: FIXED_TIMESTAMP,
-          totalAmount: 2500,
-          document_type: { id: 39 },
-          state: 1,
-        }),
+    it('GETs /documents/:id.json and unwraps the response with both lifecycle and siiStatus', async () => {
+      const fetchMock = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          ok({
+            id: 42,
+            number: 7,
+            emissionDate: FIXED_TS,
+            totalAmount: 2500,
+            document_type: { id: 39 },
+            state: 1, // inactive (deleted/voided)
+            informedSii: 2, // rejected by SII
+          }),
+        ),
       );
 
       const client = new BsaleClient({ accessToken: 'bs_test', fetch: fetchMock });
@@ -132,15 +220,17 @@ describe('BsaleClient', () => {
         'https://api.bsale.io/v1/documents/42.json',
         expect.objectContaining({ method: 'GET' }),
       );
-      expect(out).toMatchObject({ id: 42, status: 'pending', documentTypeId: 39 });
+      expect(out).toMatchObject({
+        id: 42,
+        documentTypeId: 39,
+        lifecycle: 'inactive',
+        siiStatus: 'rejected',
+      });
     });
   });
 
   describe('listClients', () => {
     it('routes RUT-shaped queries to `code` and email-shaped to `email`', async () => {
-      // Each call returns a fresh Response — `.text()` can only be read
-      // once, so reusing a single instance across two `fetch()` calls
-      // would surface the second body as empty.
       const fetchMock = vi
         .fn()
         .mockImplementation(() =>

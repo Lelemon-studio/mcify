@@ -8,7 +8,9 @@ export const createBsaleGetInvoiceTool = (sessions: BsaleSessionStore) =>
   defineTool({
     name: 'bsale_get_invoice',
     description:
-      'Look up a Bsale tax document by its internal id. Returns total, status, and PDF/XML URLs. Use the id returned by bsale_emit_dte or bsale_list_invoices.',
+      'Look up a Bsale tax document by its internal id. Returns the full record including total, ' +
+      'document lifecycle (active/inactive), SII declaration status, and PDF/XML URLs. Use the id ' +
+      'returned by bsale_emit_dte or bsale_list_invoices.',
     middlewares: [
       requireAuth({ message: 'bsale_get_invoice requires authentication' }),
       rateLimit({ max: 240, windowMs: 60_000 }),
@@ -22,9 +24,13 @@ export const createBsaleGetInvoiceTool = (sessions: BsaleSessionStore) =>
       number: z.number(),
       emissionDate: z.string(),
       totalAmount: z.number(),
+      netAmount: z.number().optional(),
+      taxAmount: z.number().optional(),
       documentTypeId: z.number(),
-      status: z.enum(['accepted', 'rejected', 'pending', 'unknown']),
+      lifecycle: z.enum(['active', 'inactive']),
+      siiStatus: z.enum(['correct', 'sent', 'rejected', 'unknown']),
       urlPdf: z.string().url().optional(),
+      urlPublicView: z.string().url().optional(),
       urlXml: z.string().url().optional(),
     }),
     handler: async ({ id }, ctx) => {

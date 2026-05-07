@@ -4,12 +4,29 @@ import { z } from 'zod';
 import { BsaleClient } from '../client.js';
 import { sessionFromContext, type BsaleSessionStore } from '../sessions.js';
 
+const dteOutput = z.object({
+  id: z.number(),
+  number: z.number(),
+  emissionDate: z.string(),
+  totalAmount: z.number(),
+  netAmount: z.number().optional(),
+  taxAmount: z.number().optional(),
+  documentTypeId: z.number(),
+  /** Bsale's `state`: 0=active, 1=inactive. Lifecycle of the document record. */
+  lifecycle: z.enum(['active', 'inactive']),
+  /** Bsale's `informedSii`: the actual declaration status with the Chilean SII. */
+  siiStatus: z.enum(['correct', 'sent', 'rejected', 'unknown']),
+  urlPdf: z.string().url().optional(),
+  urlPublicView: z.string().url().optional(),
+  urlXml: z.string().url().optional(),
+});
+
 export const createBsaleEmitDteTool = (sessions: BsaleSessionStore) =>
   defineTool({
     name: 'bsale_emit_dte',
     description:
       'Emit a Chilean SII tax document (DTE) — factura/boleta electrónica — through Bsale. ' +
-      'Returns the issued document with its number, total, and PDF/XML URLs. ' +
+      'Returns the issued document with its number, total, SII declaration status, and PDF/XML URLs. ' +
       'Use bsale_list_clients first if you need an existing clientId; otherwise pass an inline `client` and Bsale will create or match by RUT.',
     middlewares: [
       requireAuth({ message: 'bsale_emit_dte requires authentication' }),
@@ -30,28 +47,68 @@ export const createBsaleEmitDteTool = (sessions: BsaleSessionStore) =>
           .string()
           .regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD')
           .optional()
-          .describe('Issue date (YYYY-MM-DD). Defaults to today on Bsale side.'),
+          .describe(
+            'Issue date (YYYY-MM-DD). Defaults to today on Bsale side. The connector converts to a unix timestamp in GMT.',
+          ),
+        expirationDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, 'expected YYYY-MM-DD')
+          .optional()
+          .describe('Optional expiration date (YYYY-MM-DD). Useful for cotizaciones / quotes.'),
+        officeId: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            'Office id when the merchant has multiple branches. Omit for single-office accounts.',
+          ),
+        priceListId: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe('Optional Bsale price list id.'),
+        declareSii: z
+          .union([z.literal(0), z.literal(1)])
+          .optional()
+          .describe(
+            'Whether to declare the document to SII immediately (1) or keep it as a draft (0). Defaults to 1 server-side.',
+          ),
+        salesId: z
+          .string()
+          .max(100)
+          .optional()
+          .describe(
+            'Free-form external reference id. Use it for idempotency tracking (e.g. your own order id).',
+          ),
         details: z
           .array(
             z.object({
-              netUnitValue: z.number().nonnegative().describe('Net unit price (CLP, no tax)'),
-              quantity: z.number().positive().describe('Number of units'),
-              description: z
-                .string()
-                .max(1000)
-                .optional()
-                .describe('Free-text line description (Bsale calls this `comment`)'),
               variantId: z
                 .number()
                 .int()
                 .positive()
                 .optional()
-                .describe('Bsale variant id — required when the line refers to a tracked SKU'),
+                .describe('Bsale variant id — required when the line refers to a tracked SKU.'),
+              netUnitValue: z.number().nonnegative().describe('Net unit price (CLP, no tax).'),
+              quantity: z.number().positive().describe('Number of units.'),
+              description: z
+                .string()
+                .max(1000)
+                .optional()
+                .describe('Free-text line description (Bsale calls this `comment`).'),
+              discount: z
+                .number()
+                .min(0)
+                .max(100)
+                .optional()
+                .describe('Optional discount percentage (0–100).'),
               taxId: z
                 .array(z.number().int().positive())
                 .optional()
                 .describe(
-                  'Optional tax ids to apply per line. Empty = use the document type defaults.',
+                  'Optional tax ids to apply per line. Empty = use the document type defaults. The connector serializes as Bsale\'s required "[1,2]" string format.',
                 ),
             }),
           )
@@ -76,7 +133,11 @@ export const createBsaleEmitDteTool = (sessions: BsaleSessionStore) =>
             address: z.string().optional(),
             municipality: z.string().optional(),
             city: z.string().optional(),
-            activity: z.string().optional().describe('Giro tributario'),
+            activity: z.string().optional().describe('Giro tributario.'),
+            companyOrPerson: z
+              .union([z.literal(0), z.literal(1)])
+              .optional()
+              .describe('0 = persona, 1 = empresa.'),
           })
           .optional()
           .describe('Inline client. Use this OR clientId, not both.'),
@@ -84,16 +145,7 @@ export const createBsaleEmitDteTool = (sessions: BsaleSessionStore) =>
       .refine((v) => Boolean(v.clientId) !== Boolean(v.client), {
         message: 'Provide exactly one of `clientId` or `client`.',
       }),
-    output: z.object({
-      id: z.number(),
-      number: z.number(),
-      emissionDate: z.string(),
-      totalAmount: z.number(),
-      documentTypeId: z.number(),
-      status: z.enum(['accepted', 'rejected', 'pending', 'unknown']),
-      urlPdf: z.string().url().optional(),
-      urlXml: z.string().url().optional(),
-    }),
+    output: dteOutput,
     handler: async (input, ctx) => {
       const session = await sessionFromContext(sessions, ctx);
       const client = new BsaleClient({ accessToken: session.bsaleAccessToken });
