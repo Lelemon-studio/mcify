@@ -1,8 +1,8 @@
-# @mcify/example-khipu
+# @mcify/example-bsale
 
-## 0.2.0-alpha.1
+## 0.1.0-alpha.1
 
-### Patch Changes
+### Minor Changes
 
 - [`5115431`](https://github.com/Lelemon-studio/mcify/commit/51154311eff18105f70db124938f6204bb7941b1) Thanks [@kmilo93sd](https://github.com/kmilo93sd)! - Two new reference connectors — closes Phase C.2 and C.3 — plus
   bilingual READMEs across all three examples.
@@ -30,10 +30,3 @@ rateLimit + withTimeout` middleware (lower rate on emit because DTEs
   (English) + `README.es.md` (Spanish), cross-linked at the top. The
   `packages/examples/README.md` index lists the three connectors with
   status, tool count, and how to copy one as a starting template.
-
-## 0.1.0-alpha.2
-
-### Patch Changes
-
-- Updated dependencies [[`a5c698e`](https://github.com/Lelemon-studio/mcify/commit/a5c698e17c221c31b82ed0662addd4edcf4496db)]:
-  - @mcify/core@1.0.0-alpha.2
