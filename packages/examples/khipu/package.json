@@ -1,6 +1,6 @@
 {
   "name": "@mcify/example-khipu",
-  "version": "0.2.0-alpha.0",
+  "version": "0.2.0-alpha.1",
   "private": true,
   "description": "Khipu (Chile) MCP server — example connector built with mcify.",
   "license": "Apache-2.0",

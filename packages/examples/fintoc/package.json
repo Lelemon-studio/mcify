@@ -1,6 +1,6 @@
 {
   "name": "@mcify/example-fintoc",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Fintoc (Chile / Mexico) MCP server — open banking connector built with mcify.",
   "license": "Apache-2.0",

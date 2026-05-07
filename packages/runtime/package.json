@@ -1,6 +1,6 @@
 {
   "name": "@mcify/runtime",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "MCP server runtime for mcify — Hono-based, multi-target (Node, Bun, Workers).",
   "license": "Apache-2.0",
   "type": "module",

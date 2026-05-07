@@ -1,6 +1,6 @@
 {
   "name": "mcify-docs",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.0",
   "private": true,
   "description": "mcify documentation site (Astro Starlight) — docs.mcify.dev",
   "license": "Apache-2.0",

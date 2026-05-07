@@ -7,14 +7,28 @@
     "@mcify/core": "0.0.1-alpha.0",
     "@mcify/runtime": "0.0.1-alpha.0",
     "@mcify/example-khipu": "0.1.0-alpha.1",
-    "@mcify/inspector": "0.1.0-alpha.1"
+    "@mcify/inspector": "0.1.0-alpha.1",
+    "mcify-web": "0.0.0",
+    "@mcify/example-bsale": "0.1.0-alpha.0",
+    "@mcify/example-fintoc": "0.1.0-alpha.0",
+    "@mcify/example-mercadopago": "0.1.0-alpha.0",
+    "@mcify/example-simplefactura": "0.1.0-alpha.0",
+    "@mcify/payments-chile": "0.1.0-alpha.0"
   },
   "changesets": [
     "agents-md-and-khipu-template",
+    "chat-tab",
+    "ci-workflow-templates",
     "deploy-cloudflare-vercel-docker",
+    "deploy-docs",
+    "deploy-fly-railway-helm",
+    "docs-site",
+    "examples-bsale-fintoc",
     "green-rocks-join",
     "initial-alpha-release",
+    "inspector-slice-2",
     "khipu-connector",
-    "rare-squids-join"
+    "rare-squids-join",
+    "templates-and-openapi"
   ]
 }
