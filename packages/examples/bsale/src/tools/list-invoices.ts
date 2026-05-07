@@ -1,9 +1,10 @@
 import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { BsaleClient } from '../client.js';
+import { BsaleClient } from '../client.js';
+import { sessionFromContext, type BsaleSessionStore } from '../sessions.js';
 
-export const createBsaleListInvoicesTool = (client: BsaleClient) =>
+export const createBsaleListInvoicesTool = (sessions: BsaleSessionStore) =>
   defineTool({
     name: 'bsale_list_invoices',
     description:
@@ -53,5 +54,9 @@ export const createBsaleListInvoicesTool = (client: BsaleClient) =>
         }),
       ),
     }),
-    handler: async (input) => ({ invoices: await client.listInvoices(input) }),
+    handler: async (input, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const client = new BsaleClient({ accessToken: session.bsaleAccessToken });
+      return { invoices: await client.listInvoices(input) };
+    },
   });

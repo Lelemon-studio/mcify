@@ -86,42 +86,61 @@ Each user's agent — Claude Desktop running on their laptop, your in-app agent,
 
 ## Pattern B — Bearer + custom verify (no IDP)
 
-When you don't have an OIDC provider but you do have your own session store (Postgres `sessions` table, Redis, anything):
+When you don't have an OIDC provider but you do have your own session store (Postgres `sessions` table, Redis, JSON file, anything):
 
 ```ts title="mcify.config.ts"
 import { bearer, defineConfig } from '@mcify/core';
 import { sessionStore } from './lib/sessions.js';
-import { listOrders } from './tools/list-orders.js';
+import { createListOrdersTool } from './tools/list-orders.js';
 
 export default defineConfig({
   name: 'orders',
   version: '1.0.0',
   auth: bearer({
+    env: 'BEARER_ENV_UNUSED', // required by `bearer()` but unused when verify is set
     verify: async (token) => {
       const session = await sessionStore.lookup(token);
-      if (!session || session.revokedAt) return null; // → 401
-      return {
-        token,
-        claims: {
-          userId: session.userId,
-          tenantId: session.tenantId,
-          scopes: session.scopes,
-        },
-      };
+      // Return false to reject the request with 401.
+      return session !== null && !session.revokedAt;
     },
   }),
-  tools: [listOrders],
+  tools: [createListOrdersTool(sessionStore)],
 });
 ```
 
-The handler reads the same way:
+In handlers, look up the session by the bearer token (already validated by `verify`):
 
-```ts
-handler: async (input, ctx) => {
-  const userId = ctx.auth.claims['userId'] as string;
-  // ...
-};
+```ts title="src/tools/list-orders.ts"
+import { defineTool } from '@mcify/core';
+import { requireAuth } from '@mcify/core/middleware';
+import type { HandlerContext } from '@mcify/core';
+
+export const createListOrdersTool = (sessions: SessionStore) =>
+  defineTool({
+    name: 'orders_list',
+    middlewares: [requireAuth()],
+    input: /* ... */,
+    output: /* ... */,
+    handler: async (input, ctx) => {
+      // Narrow to bearer + look up the session. requireAuth has already
+      // ensured we got past the boundary, so the throw paths below are
+      // defensive (a programming error inside the runtime).
+      if (ctx.auth.type !== 'bearer') throw new Error('expected bearer auth');
+      const session = await sessions.lookup(ctx.auth.token);
+      if (!session) throw new Error('session expired');
+
+      const orders = await db.orders.findMany({
+        where: { userId: session.userId },
+        take: input.limit,
+      });
+      return { orders };
+    },
+  });
 ```
+
+The pattern: keep upstream credentials and per-user data **inside the session store**, indexed by the bearer token. Handlers re-read by token. The credential never travels through `ctx.auth` (which serializes into logs and audit trails).
+
+For a complete reference implementation of this pattern, see [`packages/examples/bsale/`](https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/bsale) — multi-tenant Bsale connector with `BsaleSessionStore` (memory + JSON file), an admin CLI for onboarding orgs, and 19 tests.
 
 The runtime calls `verify` once per request. If you need to cache lookups across requests, do it inside `verify` (e.g. lru-cache with a short TTL).
 

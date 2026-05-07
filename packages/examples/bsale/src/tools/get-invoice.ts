@@ -1,9 +1,10 @@
 import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { BsaleClient } from '../client.js';
+import { BsaleClient } from '../client.js';
+import { sessionFromContext, type BsaleSessionStore } from '../sessions.js';
 
-export const createBsaleGetInvoiceTool = (client: BsaleClient) =>
+export const createBsaleGetInvoiceTool = (sessions: BsaleSessionStore) =>
   defineTool({
     name: 'bsale_get_invoice',
     description:
@@ -26,5 +27,9 @@ export const createBsaleGetInvoiceTool = (client: BsaleClient) =>
       urlPdf: z.string().url().optional(),
       urlXml: z.string().url().optional(),
     }),
-    handler: async ({ id }) => client.getInvoice(id),
+    handler: async ({ id }, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const client = new BsaleClient({ accessToken: session.bsaleAccessToken });
+      return client.getInvoice(id);
+    },
   });

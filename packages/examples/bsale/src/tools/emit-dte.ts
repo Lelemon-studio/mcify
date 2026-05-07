@@ -1,9 +1,10 @@
 import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { BsaleClient } from '../client.js';
+import { BsaleClient } from '../client.js';
+import { sessionFromContext, type BsaleSessionStore } from '../sessions.js';
 
-export const createBsaleEmitDteTool = (client: BsaleClient) =>
+export const createBsaleEmitDteTool = (sessions: BsaleSessionStore) =>
   defineTool({
     name: 'bsale_emit_dte',
     description:
@@ -93,5 +94,9 @@ export const createBsaleEmitDteTool = (client: BsaleClient) =>
       urlPdf: z.string().url().optional(),
       urlXml: z.string().url().optional(),
     }),
-    handler: async (input) => client.emitDte(input),
+    handler: async (input, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const client = new BsaleClient({ accessToken: session.bsaleAccessToken });
+      return client.emitDte(input);
+    },
   });
