@@ -1,24 +1,28 @@
 import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { FintocClient } from '../client.js';
+import { FintocClient } from '../client.js';
+import { getLinkToken, sessionFromContext, type FintocSessionStore } from '../sessions.js';
 
-export const createFintocListAccountsTool = (client: FintocClient) =>
+export const createFintocListAccountsTool = (sessions: FintocSessionStore) =>
   defineTool({
     name: 'fintoc_list_accounts',
     description:
-      'List all bank accounts visible through a Fintoc link. The link_token represents one end-user connection. Returns each account with its id, holder, currency, and current/available balance.',
+      'List all bank accounts visible through a Fintoc link for a given end-user. ' +
+      'Identify the user by `userKey` — the connector resolves the actual link_token ' +
+      'server-side. Returns each account with id, holder, currency, and balances ' +
+      '(integers in the smallest currency unit: CLP whole pesos, MXN cents).',
     middlewares: [
       requireAuth({ message: 'fintoc_list_accounts requires authentication' }),
       rateLimit({ max: 60, windowMs: 60_000 }),
       withTimeout({ ms: 8_000 }),
     ],
     input: z.object({
-      linkToken: z
+      userKey: z
         .string()
         .min(1)
         .describe(
-          'Fintoc link_token from the connection flow. Identifies which end-user connection to query.',
+          'Stable identifier for the end-user whose accounts to query (e.g. their RUT or your internal user id). The connector maps this to the actual Fintoc link_token.',
         ),
     }),
     output: z.object({
@@ -41,5 +45,13 @@ export const createFintocListAccountsTool = (client: FintocClient) =>
         }),
       ),
     }),
-    handler: async ({ linkToken }) => ({ accounts: await client.listAccounts(linkToken) }),
+    handler: async ({ userKey }, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const linkToken = getLinkToken(session, userKey);
+      const client = new FintocClient({
+        secretKey: session.secretKey,
+        ...(session.fintocVersion ? { fintocVersion: session.fintocVersion } : {}),
+      });
+      return { accounts: await client.listAccounts(linkToken) };
+    },
   });

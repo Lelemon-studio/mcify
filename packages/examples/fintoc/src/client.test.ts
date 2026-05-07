@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { FintocApiError, FintocClient } from './client.js';
+import { DEFAULT_FINTOC_VERSION, FintocApiError, FintocClient } from './client.js';
 
-const ok = (body: unknown): Response =>
+const ok = (body: unknown, headers: Record<string, string> = {}): Response =>
   new Response(JSON.stringify(body), {
     status: 200,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
   });
 
 const err = (status: number, body: unknown): Response =>
@@ -25,15 +25,27 @@ const sampleAccount = {
   balance: { available: 100000, current: 105000 },
 };
 
-const sampleMovement = {
+const sampleMovementOutbound = {
   id: 'mov_1',
   amount: -25000,
   currency: 'CLP',
   post_date: '2024-05-08',
+  transaction_date: '2024-05-07T19:16:00.000Z',
   description: 'Transferencia a proveedor',
   recipient_account: { holder_id: '22.222.222-2', holder_name: 'Proveedor' },
   type: 'transfer' as const,
   pending: false,
+};
+
+const sampleMovementInbound = {
+  id: 'mov_2',
+  amount: 80000,
+  currency: 'CLP',
+  post_date: '2024-05-09',
+  transaction_date: '2024-05-09T10:30:00.000Z',
+  description: 'Pago recibido',
+  sender_account: { holder_id: '33.333.333-3', holder_name: 'Cliente Pagador' },
+  type: 'transfer' as const,
 };
 
 describe('FintocClient', () => {
@@ -43,7 +55,7 @@ describe('FintocClient', () => {
   });
 
   describe('listAccounts', () => {
-    it('GETs /accounts with link_token in the query and Authorization header', async () => {
+    it('GETs /accounts with link_token, Authorization (no Bearer), and Fintoc-Version header', async () => {
       const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok([sampleAccount])));
       const client = new FintocClient({ secretKey: 'sk_test_123', fetch: fetchMock });
 
@@ -54,8 +66,10 @@ describe('FintocClient', () => {
       expect(parsed.pathname).toBe('/v1/accounts');
       expect(parsed.searchParams.get('link_token')).toBe('link_abc');
       const headers = (init as RequestInit).headers as Record<string, string>;
-      // Fintoc uses the secret key directly — no `Bearer` prefix.
+      // Fintoc uses the secret key directly — literal, no `Bearer` prefix.
       expect(headers.Authorization).toBe('sk_test_123');
+      expect(headers.Accept).toBe('application/json');
+      expect(headers['Fintoc-Version']).toBe(DEFAULT_FINTOC_VERSION);
 
       expect(out).toHaveLength(1);
       expect(out[0]).toMatchObject({
@@ -64,6 +78,21 @@ describe('FintocClient', () => {
         holderId: '11.111.111-1',
         balance: { available: 100000, current: 105000 },
       });
+    });
+
+    it('respects an explicit fintocVersion override', async () => {
+      const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok([sampleAccount])));
+      const client = new FintocClient({
+        secretKey: 'sk_test_123',
+        fintocVersion: '2023-11-15',
+        fetch: fetchMock,
+      });
+      await client.listAccounts('link_abc');
+      const headers = (fetchMock.mock.calls[0]![1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(headers['Fintoc-Version']).toBe('2023-11-15');
     });
   });
 
@@ -95,8 +124,12 @@ describe('FintocClient', () => {
   });
 
   describe('listMovements', () => {
-    it('forwards date range and per_page filters', async () => {
-      const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(ok([sampleMovement])));
+    it('forwards date range and per_page filters; maps both recipient and sender accounts', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(ok([sampleMovementOutbound, sampleMovementInbound])),
+        );
       const client = new FintocClient({ secretKey: 'sk_test_123', fetch: fetchMock });
 
       const out = await client.listMovements('link_abc', 'acc_1', {
@@ -112,12 +145,20 @@ describe('FintocClient', () => {
       expect(parsed.searchParams.get('until')).toBe('2024-05-31');
       expect(parsed.searchParams.get('per_page')).toBe('100');
 
-      expect(out).toHaveLength(1);
+      expect(out).toHaveLength(2);
       expect(out[0]).toMatchObject({
         id: 'mov_1',
         amount: -25000,
+        transactionDate: '2024-05-07T19:16:00.000Z',
         recipientAccount: { holderId: '22.222.222-2', holderName: 'Proveedor' },
       });
+      expect(out[0]).not.toHaveProperty('senderAccount');
+      expect(out[1]).toMatchObject({
+        id: 'mov_2',
+        amount: 80000,
+        senderAccount: { holderId: '33.333.333-3', holderName: 'Cliente Pagador' },
+      });
+      expect(out[1]).not.toHaveProperty('recipientAccount');
     });
 
     it('omits filters when not provided', async () => {
@@ -132,6 +173,87 @@ describe('FintocClient', () => {
       expect(parsed.searchParams.has('until')).toBe(false);
       expect(parsed.searchParams.has('per_page')).toBe(false);
       expect(parsed.searchParams.get('link_token')).toBe('link_abc');
+    });
+
+    it('follows the Link: rel="next" header to fetch all pages', async () => {
+      let call = 0;
+      const fetchMock = vi.fn().mockImplementation((url: string) => {
+        call++;
+        if (call === 1) {
+          // First page returns mov_1 + a Link header to page 2.
+          expect(url).toContain('/v1/accounts/acc_1/movements');
+          return Promise.resolve(
+            ok([sampleMovementOutbound], {
+              Link: '<https://api.fintoc.com/v1/accounts/acc_1/movements?page=2&link_token=link_abc>; rel="next"',
+            }),
+          );
+        }
+        if (call === 2) {
+          // Second page returns mov_2 + a Link header for "prev" only (no next).
+          expect(url).toContain('page=2');
+          return Promise.resolve(
+            ok([sampleMovementInbound], {
+              Link: '<https://api.fintoc.com/v1/accounts/acc_1/movements?page=1&link_token=link_abc>; rel="prev"',
+            }),
+          );
+        }
+        throw new Error('Unexpected extra call');
+      });
+
+      const client = new FintocClient({ secretKey: 'sk_test_123', fetch: fetchMock });
+      const out = await client.listMovements('link_abc', 'acc_1');
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(out).toHaveLength(2);
+      expect(out.map((m) => m.id)).toEqual(['mov_1', 'mov_2']);
+    });
+
+    it('respects maxPages cap to avoid runaway pagination', async () => {
+      const fetchMock = vi.fn().mockImplementation((url: string) =>
+        Promise.resolve(
+          ok([sampleMovementOutbound], {
+            // Always advertises another page — would loop forever without the cap.
+            Link: `<${url}&loop=1>; rel="next"`,
+          }),
+        ),
+      );
+      const client = new FintocClient({ secretKey: 'sk_test_123', fetch: fetchMock });
+
+      const out = await client.listMovements('link_abc', 'acc_1', { maxPages: 3 });
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(out).toHaveLength(3);
+    });
+  });
+
+  describe('createRefreshIntent', () => {
+    it('POSTs /refresh_intents with the link_token and parses the response', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(
+            ok({ id: 'ri_1', status: 'created', created_at: '2024-05-08T12:00:00Z' }),
+          ),
+        );
+      const client = new FintocClient({ secretKey: 'sk_test_123', fetch: fetchMock });
+
+      const out = await client.createRefreshIntent('link_abc');
+
+      const [url, init] = fetchMock.mock.calls[0]!;
+      const parsed = new URL(url as string);
+      expect(parsed.pathname).toBe('/v1/refresh_intents');
+      const reqInit = init as RequestInit;
+      expect(reqInit.method).toBe('POST');
+      const headers = reqInit.headers as Record<string, string>;
+      expect(headers['Content-Type']).toBe('application/json');
+      expect(headers['Fintoc-Version']).toBe(DEFAULT_FINTOC_VERSION);
+      expect(JSON.parse(reqInit.body as string)).toEqual({ link_token: 'link_abc' });
+
+      expect(out).toEqual({
+        id: 'ri_1',
+        status: 'created',
+        createdAt: '2024-05-08T12:00:00Z',
+      });
     });
   });
 

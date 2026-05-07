@@ -1,20 +1,28 @@
 import { defineTool } from '@mcify/core';
 import { rateLimit, requireAuth, withTimeout } from '@mcify/core/middleware';
 import { z } from 'zod';
-import type { FintocClient } from '../client.js';
+import { FintocClient } from '../client.js';
+import { getLinkToken, sessionFromContext, type FintocSessionStore } from '../sessions.js';
 
-export const createFintocListMovementsTool = (client: FintocClient) =>
+export const createFintocListMovementsTool = (sessions: FintocSessionStore) =>
   defineTool({
     name: 'fintoc_list_movements',
     description:
-      'List bank movements (transactions) for a single Fintoc account. Filter by date range. Returns each movement with amount, date, description, type, and counterparty when available.',
+      'List bank movements (transactions) for a single Fintoc account belonging to a ' +
+      'given end-user. Filter by date range. Pagination is automatic — the connector ' +
+      "follows Fintoc's `Link` header up to `maxPages`. Amounts are signed integers in " +
+      'the smallest currency unit; `senderAccount` appears for inbound movements and ' +
+      '`recipientAccount` for outbound.',
     middlewares: [
       requireAuth({ message: 'fintoc_list_movements requires authentication' }),
       rateLimit({ max: 60, windowMs: 60_000 }),
-      withTimeout({ ms: 10_000 }),
+      withTimeout({ ms: 15_000 }),
     ],
     input: z.object({
-      linkToken: z.string().min(1).describe('Fintoc link_token from the connection flow.'),
+      userKey: z
+        .string()
+        .min(1)
+        .describe('Stable identifier for the end-user (resolves to a link_token server-side).'),
       accountId: z
         .string()
         .min(1)
@@ -35,7 +43,16 @@ export const createFintocListMovementsTool = (client: FintocClient) =>
         .positive()
         .max(300)
         .optional()
-        .describe('Page size (max 300, defaults to Fintoc default).'),
+        .describe('Page size (max 300, defaults to Fintoc default of 30).'),
+      maxPages: z
+        .number()
+        .int()
+        .positive()
+        .max(50)
+        .optional()
+        .describe(
+          'Cap on pages followed via the cursor. Default 10. Raise for deep historical scans; lower for chat-time queries.',
+        ),
     }),
     output: z.object({
       movements: z.array(
@@ -44,14 +61,24 @@ export const createFintocListMovementsTool = (client: FintocClient) =>
           amount: z.number(),
           currency: z.string(),
           postDate: z.string(),
+          transactionDate: z.string().optional(),
           description: z.string(),
           type: z.enum(['transfer', 'deposit', 'cash', 'service_payment', 'other']),
           recipientAccount: z.object({ holderId: z.string(), holderName: z.string() }).optional(),
+          senderAccount: z.object({ holderId: z.string(), holderName: z.string() }).optional(),
           pending: z.boolean().optional(),
         }),
       ),
     }),
-    handler: async ({ linkToken, accountId, ...params }) => ({
-      movements: await client.listMovements(linkToken, accountId, params),
-    }),
+    handler: async ({ userKey, accountId, ...params }, ctx) => {
+      const session = await sessionFromContext(sessions, ctx);
+      const linkToken = getLinkToken(session, userKey);
+      const client = new FintocClient({
+        secretKey: session.secretKey,
+        ...(session.fintocVersion ? { fintocVersion: session.fintocVersion } : {}),
+      });
+      return {
+        movements: await client.listMovements(linkToken, accountId, params),
+      };
+    },
   });

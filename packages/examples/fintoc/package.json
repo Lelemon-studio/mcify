@@ -25,6 +25,7 @@
     "test:watch": "vitest",
     "lint": "echo \"(lint runs at root)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "admin": "tsx scripts/admin.ts",
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@mcify/runtime": "workspace:*"
+    "@mcify/runtime": "workspace:*",
+    "tsx": "^4.19.2"
   }
 }
