@@ -185,6 +185,22 @@ importers:
         specifier: workspace:*
         version: link:../../runtime
 
+  packages/examples/simplefactura:
+    dependencies:
+      '@mcify/core':
+        specifier: workspace:*
+        version: link:../../core
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@mcify/runtime':
+        specifier: workspace:*
+        version: link:../../runtime
+      tsx:
+        specifier: ^4.19.2
+        version: 4.21.0
+
   packages/inspector:
     dependencies:
       '@mcify/runtime':
