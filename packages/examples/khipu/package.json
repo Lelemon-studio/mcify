@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@mcify/core": "workspace:*",
+    "@mcify/payments-chile": "workspace:*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

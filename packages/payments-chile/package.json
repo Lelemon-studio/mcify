@@ -1,18 +1,32 @@
 {
-  "name": "@mcify/example-mercadopago",
+  "name": "@mcify/payments-chile",
   "version": "0.1.0-alpha.0",
-  "private": true,
-  "description": "Mercado Pago (Chile / LATAM) MCP server — multi-tenant payment-link connector built with mcify.",
+  "description": "Vendor-agnostic types and helpers for Chilean payment-link APIs (Khipu, Mercado Pago, Webpay, Smart Checkout). Used by mcify connectors to expose a portable shape across vendors.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/examples/mercadopago#readme",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/Lelemon-studio/mcify/tree/main/packages/payments-chile#readme",
   "bugs": "https://github.com/Lelemon-studio/mcify/issues",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Lelemon-studio/mcify.git",
-    "directory": "packages/examples/mercadopago"
+    "directory": "packages/payments-chile"
   },
   "author": "Lelemon Studio <contacto@lelemon.cl>",
   "engines": {
@@ -25,16 +39,10 @@
     "test:watch": "vitest",
     "lint": "echo \"(lint runs at root)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "admin": "tsx scripts/admin.ts",
-    "clean": "rimraf dist .turbo"
+    "clean": "rimraf dist .turbo",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@mcify/core": "workspace:*",
-    "@mcify/payments-chile": "workspace:*",
     "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@mcify/runtime": "workspace:*",
-    "tsx": "^4.19.2"
   }
 }
