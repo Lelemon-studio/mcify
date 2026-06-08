@@ -90,5 +90,12 @@ export const resolveAuthFromHeaders = async (
     );
   }
 
+  if (authConfig.type === 'oauth_provider') {
+    // The first-party authorization server is wired into the HTTP layer (Phase 2): token
+    // resolution + the OAuth endpoints live there, not in this header-only resolver. Fail
+    // CLOSED here so a config that reaches this path is never silently treated as unauthenticated.
+    throw new McifyAuthError('oauthProvider must be resolved by the HTTP layer', 401);
+  }
+
   return { type: 'none' };
 };

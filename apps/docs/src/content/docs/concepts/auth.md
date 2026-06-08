@@ -54,6 +54,42 @@ The runtime validates JWTs against the provider's JWKS. The decoded claims land 
 
 > **Building a multi-user server?** Read the [Multi-user / multi-tenant](/guides/multi-user/) guide — it walks the full pattern (OAuth, custom verify, scoping queries by `userId`, the antipattern that breaks isolation).
 
+## OAuth provider (mcify as the authorization server)
+
+The `oauth()` above **delegates** to an external IdP. To instead let your server issue its own
+tokens — the "Connect Claude" flow, where a user pastes your URL, approves in the browser, and no
+API key is copied — use `oauthProvider()`. mcify becomes a full OAuth 2.1 authorization server: it
+mounts the discovery metadata, Dynamic Client Registration, `/authorize`, and `/token`, enforces
+PKCE S256 + single-use codes + refresh rotation, and answers `401 + WWW-Authenticate` so the agent
+bootstraps itself.
+
+```ts
+import { defineConfig, oauthProvider, MemoryOAuthStore } from '@mcify/core';
+
+defineConfig({
+  auth: oauthProvider({
+    issuer: process.env.MCIFY_ISSUER, // or derived from the request origin
+    store: new MemoryOAuthStore(), // bring a Postgres/KV adapter for production
+    authorize: async (request) => {
+      const session = await readSession(request); // your cookie/session
+      if (!session) return { status: 'redirect', url: `${DASHBOARD}/consent?...` };
+      return { status: 'authenticated', subject: { userId: session.userId } };
+    },
+  }),
+  tools: [
+    /* ... */
+  ],
+});
+```
+
+You provide two pluggable pieces: an `OAuthStore` (persistence) and an `authorize(request)` hook
+(your session + consent UI). The authenticated `subject` is opaque to mcify and surfaces on
+`ctx.auth.subject` in your handlers. Everything runs on Web Crypto, so it works on Node, Bun, and
+Cloudflare Workers unchanged.
+
+> Read [Securing an OAuth 2.1 authorization server for MCP](/guides/oauth2-authorization-server/)
+> for the discovery chain, the non-negotiables, and the production gotchas.
+
 ## Custom verify
 
 If your token shape doesn't fit `bearer` / `apiKey`, pass a `verify` function:

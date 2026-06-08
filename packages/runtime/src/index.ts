@@ -8,6 +8,15 @@ export { dispatch, matchUriTemplate } from './dispatch.js';
 export { createHttpApp, createHttpHandler } from './http.js';
 export type { HttpHandlerOptions, FetchHandler, EnvProvider } from './http.js';
 
+// OAuth 2.1 authorization-server endpoints (mounted automatically when `auth: oauthProvider(...)`).
+export {
+  mountOAuthEndpoints,
+  resolveOAuthBearer,
+  wwwAuthenticate,
+  isOAuthProvider,
+} from './oauth-endpoints.js';
+export type { OAuthProviderConfig, MountOAuthOptions } from './oauth-endpoints.js';
+
 // Stdio transport
 export { serveStdio } from './stdio.js';
 export type { StdioServeOptions } from './stdio.js';
