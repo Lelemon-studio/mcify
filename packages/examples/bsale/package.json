@@ -1,6 +1,6 @@
 {
   "name": "@mcify/example-bsale",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Bsale (Chile) MCP server — DTE / facturación electrónica connector built with mcify.",
   "license": "Apache-2.0",
