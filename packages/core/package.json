@@ -1,6 +1,6 @@
 {
   "name": "@mcify/core",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Builder library for mcify MCP servers — schema, server, auth helpers, logger.",
   "license": "Apache-2.0",
   "type": "module",
