@@ -3,6 +3,12 @@ import type { Config, Logger } from '@mcify/core';
 import { buildHandlerContext } from './context.js';
 import { dispatch } from './dispatch.js';
 import { McifyAuthError, getProcessEnv, resolveAuthFromHeaders, type EnvSource } from './auth.js';
+import {
+  isOAuthProvider,
+  mountOAuthEndpoints,
+  resolveOAuthBearer,
+  wwwAuthenticate,
+} from './oauth-endpoints.js';
 import { err, JsonRpcErrorCodes as Codes } from './jsonrpc.js';
 import { createConsoleLogger } from './logger.js';
 import { RUNTIME_VERSION } from './version.js';
@@ -82,6 +88,11 @@ export const createHttpApp = (config: Config, options: HttpHandlerOptions = {}):
     );
   }
 
+  // First-party OAuth 2.1 authorization server: mount discovery + OAuth endpoints alongside `path`.
+  if (isOAuthProvider(config.auth)) {
+    mountOAuthEndpoints(app, config.auth, { mcpPath: path, logger });
+  }
+
   app.post(path, async (c) => {
     let body: unknown;
     try {
@@ -95,16 +106,28 @@ export const createHttpApp = (config: Config, options: HttpHandlerOptions = {}):
     const env = resolveEnv(c, options.env);
 
     let authState;
-    try {
-      authState = await resolveAuthFromHeaders(config.auth, c.req.raw.headers, env);
-    } catch (e) {
-      if (e instanceof McifyAuthError) {
-        return c.json(err(null, Codes.Unauthorized, e.message), e.status);
+    if (isOAuthProvider(config.auth)) {
+      // The authorization-server path resolves the Bearer against the token store and answers a
+      // discovery-friendly 401 (RFC 9728) so the agent can bootstrap the whole OAuth flow.
+      const st = await resolveOAuthBearer(c, config.auth, path);
+      if (!st) {
+        return c.json(err(null, Codes.Unauthorized, 'authentication required'), 401, {
+          'WWW-Authenticate': wwwAuthenticate(c, config.auth),
+        });
       }
-      reqLogger.error('auth resolution failed', {
-        error: e instanceof Error ? e.message : String(e),
-      });
-      return c.json(err(null, Codes.InternalError, 'auth resolution failed'), 500);
+      authState = st;
+    } else {
+      try {
+        authState = await resolveAuthFromHeaders(config.auth, c.req.raw.headers, env);
+      } catch (e) {
+        if (e instanceof McifyAuthError) {
+          return c.json(err(null, Codes.Unauthorized, e.message), e.status);
+        }
+        reqLogger.error('auth resolution failed', {
+          error: e instanceof Error ? e.message : String(e),
+        });
+        return c.json(err(null, Codes.InternalError, 'auth resolution failed'), 500);
+      }
     }
 
     const ctx = buildHandlerContext({
