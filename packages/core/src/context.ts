@@ -13,7 +13,15 @@ export type AuthState =
   | { readonly type: 'none' }
   | { readonly type: 'bearer'; readonly token: string }
   | { readonly type: 'api_key'; readonly key: string; readonly headerName: string }
-  | { readonly type: 'oauth'; readonly token: string; readonly scopes: readonly string[] };
+  | { readonly type: 'oauth'; readonly token: string; readonly scopes: readonly string[] }
+  | {
+      // Issued by mcify's own authorization server (`oauthProvider()`). `subject` is the opaque
+      // host identity bound to the token (e.g. Lelemon's `{ userId, projectId }`).
+      readonly type: 'oauth_provider';
+      readonly subject: Record<string, string>;
+      readonly clientId: string;
+      readonly scope: string | null;
+    };
 
 export interface RequestMeta {
   readonly id: string;
